@@ -2,9 +2,9 @@ using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.InputSystem;
 
-namespace PilotPursuit.Player
+namespace PilotPursuit.Movement
 {
-    public class MovementController : MonoBehaviour
+    public class RunController : MonoBehaviour
     {
         [SerializeField] private new Rigidbody rigidbody;
         [Header("Move Settings")]
@@ -77,7 +77,7 @@ namespace PilotPursuit.Player
         #region Debug
         private bool CheckReferences()
         {
-            if (rigidbody == null) Debug.LogError($"{nameof(rigidbody)} is not assigned on {name}'s {nameof(MovementController)}");
+            if (rigidbody == null) Debug.LogError($"{nameof(rigidbody)} is not assigned on {name}'s {nameof(RunController)}");
             else return true;
 
             return false;

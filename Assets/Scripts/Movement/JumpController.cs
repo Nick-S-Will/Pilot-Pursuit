@@ -3,7 +3,7 @@ using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.InputSystem;
 
-namespace PilotPursuit.Player
+namespace PilotPursuit.Movement
 {
     public class JumpController : MonoBehaviour
     {
