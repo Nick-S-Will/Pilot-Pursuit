@@ -25,9 +25,6 @@ namespace PilotPursuit.Player
         private void Awake()
         {
             if (!CheckReferences()) enabled = false;
-
-            OnStartMoving.AddListener(() => print("Start"));
-            OnStopMoving.AddListener(() => print("Stop"));
         }
 
         private void FixedUpdate()
@@ -64,15 +61,16 @@ namespace PilotPursuit.Player
         #region Move
         public void Move(InputAction.CallbackContext context) => moveInput = context.ReadValue<Vector2>();
 
+        public void Move(Vector2 input) => moveInput = input;
+
         private void Move()
         {
             if (moveInput == Vector2.zero) return;
 
             var localMoveInput = new Vector3(moveInput.x, 0, moveInput.y);
-            var localMoveForce = Vector3.Scale(OnGround ? groundMoveForce : airMoveForce, localMoveInput);
-            var moveForce = rigidbody.rotation * localMoveForce;
+            var localMoveForce = Vector3.Scale(localMoveInput, OnGround ? groundMoveForce : airMoveForce);
 
-            rigidbody.AddForce(moveForce);
+            rigidbody.AddRelativeForce(localMoveForce);
         }
         #endregion
 

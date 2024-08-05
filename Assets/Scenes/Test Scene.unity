@@ -270,6 +270,7 @@ GameObject:
   m_Component:
   - component: {fileID: 604522411}
   - component: {fileID: 604522413}
+  - component: {fileID: 604522415}
   - component: {fileID: 604522414}
   - component: {fileID: 604522412}
   - component: {fileID: 604522408}
@@ -365,6 +366,13 @@ MonoBehaviour:
     serializedVersion: 2
     m_Bits: 1
   maxGroundDistance: 0.1
+  minSpeed: 0.01
+  OnStartMoving:
+    m_PersistentCalls:
+      m_Calls: []
+  OnStopMoving:
+    m_PersistentCalls:
+      m_Calls: []
 --- !u!114 &604522414
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -406,11 +414,58 @@ MonoBehaviour:
         m_CallState: 2
     m_ActionId: 216a0b55-5f27-4b2d-b49f-dc49ebf0615d
     m_ActionName: Player/Move[/Keyboard/w,/Keyboard/s,/Keyboard/a,/Keyboard/d]
+  - m_PersistentCalls:
+      m_Calls:
+      - m_Target: {fileID: 604522415}
+        m_TargetAssemblyTypeName: PilotPursuit.Player.JumpController, Assembly-CSharp
+        m_MethodName: ChargeJump
+        m_Mode: 0
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
+    m_ActionId: 15c8267b-95f9-4ca1-9b71-416867c64b1a
+    m_ActionName: Player/Jump[/Keyboard/space]
   m_NeverAutoSwitchControlSchemes: 0
   m_DefaultControlScheme: Mouse Keyboard
   m_DefaultActionMap: Player
   m_SplitScreenIndex: -1
   m_Camera: {fileID: 0}
+--- !u!114 &604522415
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 604522407}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b4796ca6948564742807ff9de6100263, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  rigidbody: {fileID: 604522412}
+  chargeTime: 0.4
+  jumpTime: 0.15
+  jumpForce: 3250
+  jumpBufferTime: 0.1
+  coyoteTime: 0.1
+  groundMask:
+    serializedVersion: 2
+    m_Bits: 1
+  maxGroundDistance: 0.1
+  OnChargingJump:
+    m_PersistentCalls:
+      m_Calls: []
+  OnJump:
+    m_PersistentCalls:
+      m_Calls: []
+  OnLand:
+    m_PersistentCalls:
+      m_Calls: []
 --- !u!1 &705507993
 GameObject:
   m_ObjectHideFlags: 0
