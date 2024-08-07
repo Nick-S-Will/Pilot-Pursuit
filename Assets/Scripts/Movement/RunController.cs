@@ -31,7 +31,7 @@ namespace PilotPursuit.Movement
         {
             CheckOnGround();
 
-            Move();
+            Run();
 
             CheckMoving();
         }
@@ -58,12 +58,12 @@ namespace PilotPursuit.Movement
         }
         #endregion
 
-        #region Move
-        public void Move(InputAction.CallbackContext context) => moveInput = context.ReadValue<Vector2>();
+        #region Run
+        public void Run(InputAction.CallbackContext context) => moveInput = context.ReadValue<Vector2>();
 
-        public void Move(Vector2 input) => moveInput = input;
+        public void Run(Vector2 input) => moveInput = input;
 
-        private void Move()
+        private void Run()
         {
             if (moveInput == Vector2.zero) return;
 
