@@ -656,7 +656,7 @@ MonoBehaviour:
   rigidbody: {fileID: 604522412}
   chargeTime: 0.4
   jumpTime: 0.15
-  jumpForce: 3250
+  jumpForce: 3000
   jumpBufferTime: 0.1
   coyoteTime: 0.1
   groundMask:

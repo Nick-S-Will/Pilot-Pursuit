@@ -9,8 +9,8 @@ namespace PilotPursuit.Movement
     {
         [SerializeField] private new Rigidbody rigidbody;
         [Header("Jump Settings")]
-        [SerializeField][Min(0f)] private float chargeTime = 1f;
-        [SerializeField][Min(0f)] private float jumpTime = 0.25f, jumpForce = 2000f, jumpBufferTime = .1f, coyoteTime = .1f;
+        [SerializeField][Min(0f)] private float chargeTime = .4f;
+        [SerializeField][Min(0f)] private float jumpTime = .15f, jumpForce = 3000f, jumpBufferTime = .1f, coyoteTime = .1f;
         [Header("Physics Checks")]
         [SerializeField] private LayerMask groundMask;
         [SerializeField][Min(0f)] private float maxGroundDistance = .1f;
@@ -25,7 +25,7 @@ namespace PilotPursuit.Movement
         private float lastGroundTime;
         private bool chargingJump;
 
-        public bool CanJump => lastGroundTime + coyoteTime > Time.time;
+        public bool OnGround => lastGroundTime + coyoteTime > Time.time;
 
         private void Awake()
         {
@@ -45,7 +45,7 @@ namespace PilotPursuit.Movement
 
             if (groundColliderCount > 0)
             {
-                if (!CanJump) OnLand.Invoke();
+                if (!OnGround) OnLand.Invoke();
                 lastGroundTime = Time.time;
             }
         }
@@ -66,22 +66,17 @@ namespace PilotPursuit.Movement
 
         private IEnumerator ChargeJumpRoutine()
         {
-            var elapsedTime = 0f;
-            OnChargingJump.Invoke(0f);
-
-            float GetChargePercent() => elapsedTime / chargeTime;
-
-            while (chargingJump && elapsedTime < chargeTime)
+            float startTime = Time.time, chargePercent = 0f;
+            while (chargingJump && chargePercent < 1f)
             {
+                chargePercent = Mathf.Min((Time.time - startTime) / chargeTime, 1f);
+                OnChargingJump.Invoke(chargePercent);
+
                 yield return new WaitForFixedUpdate();
-
-                elapsedTime = Mathf.Min(elapsedTime + Time.fixedDeltaTime, chargeTime);
-                OnChargingJump.Invoke(GetChargePercent());
             }
-
             yield return new WaitWhile(() => chargingJump);
 
-            yield return StartCoroutine(TryJumpRoutine(GetChargePercent()));
+            yield return StartCoroutine(TryJumpRoutine(chargePercent));
 
             jumpRoutine = null;
         }
@@ -94,26 +89,16 @@ namespace PilotPursuit.Movement
 
         private IEnumerator TryJumpRoutine(float chargePercent)
         {
-            var elapsedTime = 0f;
-            while (elapsedTime < jumpBufferTime)
-            {
-                if (CanJump) break;
-
-                elapsedTime += Time.fixedDeltaTime;
-
-                yield return new WaitForFixedUpdate();
-            }
-
-            if (!CanJump) yield break;
+            var startTime = Time.time;
+            while (Time.time < startTime + jumpBufferTime && !OnGround) yield return new WaitForFixedUpdate();
+            if (!OnGround) yield break;
 
             OnJump.Invoke();
 
-            elapsedTime = 0f;
-            while (elapsedTime < jumpTime)
+            startTime = Time.time;
+            while (Time.time < startTime + jumpTime)
             {
                 rigidbody.AddRelativeForce(chargePercent * jumpForce * Vector3.up);
-
-                elapsedTime += Time.fixedDeltaTime;
 
                 yield return new WaitForFixedUpdate();
             }
