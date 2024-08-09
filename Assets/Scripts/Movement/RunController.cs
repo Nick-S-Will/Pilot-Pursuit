@@ -22,7 +22,7 @@ namespace PilotPursuit.Movement
         [SerializeField] private bool logEvents;
 
         private Vector2 moveInput;
-        private Vector3 lastVelocity;
+        private float lastProjectedSpeed;
 
         public Rigidbody Rigidbody => rigidbody;
         public bool IsOnGround { get; private set; }
@@ -35,15 +35,15 @@ namespace PilotPursuit.Movement
 
         private void FixedUpdate()
         {
-            CheckOnGround();
+            UpdateIsOnGround();
 
             Run();
 
-            CheckMoving();
+            UpdateMovingState();
         }
 
         #region Physics Checks
-        private void CheckOnGround()
+        private void UpdateIsOnGround()
         {
             if (maxGroundDistance == 0f)
             {
@@ -56,17 +56,15 @@ namespace PilotPursuit.Movement
             IsOnGround = groundColliderCount > 0;
         }
 
-        private void CheckMoving()
+        private void UpdateMovingState()
         {
             var rigidbodyUp = rigidbody.rotation * Vector3.up;
-            var projectedLastSpeed = Vector3.ProjectOnPlane(lastVelocity, rigidbodyUp).magnitude;
             var projectedSpeed = Vector3.ProjectOnPlane(rigidbody.velocity, rigidbodyUp).magnitude;
-            var projectedAcceleration = Vector3.ProjectOnPlane(rigidbody.GetAccumulatedForce(), rigidbodyUp).magnitude;
 
-            if (projectedLastSpeed < minSpeed && projectedSpeed >= minSpeed) OnStartMoving.Invoke();
-            else if (projectedLastSpeed >= minSpeed && projectedSpeed < minSpeed && projectedAcceleration < minSpeed) OnStopMoving.Invoke();
+            if (lastProjectedSpeed < minSpeed && projectedSpeed >= minSpeed) OnStartMoving.Invoke();
+            else if (lastProjectedSpeed >= minSpeed && projectedSpeed < minSpeed) OnStopMoving.Invoke();
 
-            lastVelocity = rigidbody.velocity;
+            lastProjectedSpeed = projectedSpeed;
         }
         #endregion
 
@@ -98,7 +96,7 @@ namespace PilotPursuit.Movement
         private void AddLogToEvents()
         {
             OnStartMoving.AddListener(() => Debug.Log(GetType().Name + ": " + nameof(OnStartMoving)));
-            OnStopMoving.AddListener(() => Debug.Log(GetType().Name + ": " + nameof(OnStartMoving)));
+            OnStopMoving.AddListener(() => Debug.Log(GetType().Name + ": " + nameof(OnStopMoving)));
         }
         #endregion
     }
