@@ -9,23 +9,52 @@ namespace PilotPursuit.Gadgets
     {
         [SerializeField] private JumpController jumpController;
         [SerializeField] private Rocket rocketPrefab;
-        [SerializeField] private Transform[] rocketSpawnPoints;
+        [SerializeField] private Transform[] launchPoints;
         [Header("Launch Settings")]
         [SerializeField][Min(0f)] private float launchForce = 1000f;
         [SerializeField][Min(0f)] private float launchInterval = 3f;
         [SerializeField][Min(1f)] private int clipSize = 3;
+        [Header("Physics Checks")]
+        [SerializeField] private LayerMask obstacleMask;
+        [Tooltip("Set to (0, 0, 0) to disable obstacle check.")]
+        [SerializeField] private Vector3 obstacleCheckExtents = .5f * Vector3.one;
         [Header("Events")]
         public UnityEvent OnLaunchFailed;
-        public UnityEvent OnLaunch, OnLastRocket, OnReload;
+        public UnityEvent OnLaunchBlocked, OnLaunch, OnLastRocket, OnReload;
+        [Header("Debug")]
+        [SerializeField] private bool logEvents;
 
         private float lastLaunchTime;
         private int rocketsInClip;
 
-        public bool CanLaunch => Time.time >= lastLaunchTime + launchInterval && rocketsInClip > 0;
+        /// <summary>
+        /// True if launcher has rockets loaded
+        /// </summary>
+        public bool IsReadyToLaunch => Time.time >= lastLaunchTime + launchInterval && rocketsInClip > 0;
+        /// <summary>
+        /// True if none of the <see cref="launchPoints"/> are obstructed
+        /// </summary>
+        public bool IsClearToLaunch
+        {
+            get
+            {
+                if (obstacleCheckExtents == Vector3.zero) return true;
+
+                var colliders = new Collider[1];
+                foreach (var point in launchPoints)
+                {
+                    var overlapCount = Physics.OverlapBoxNonAlloc(point.position, obstacleCheckExtents, colliders, point.rotation, obstacleMask);
+                    if (overlapCount > 0) return false;
+                }
+
+                return true;
+            }
+        }
 
         private void Awake()
         {
             if (!CheckReferences()) enabled = false;
+            if (logEvents) AddLogToEvents();
         }
 
         private void Start()
@@ -42,21 +71,28 @@ namespace PilotPursuit.Gadgets
 
         public void TryLaunch()
         {
-            if (!CanLaunch)
+            if (!enabled || jumpController.IsOnGround) return;
+
+            if (!IsReadyToLaunch)
             {
                 OnLaunchFailed.Invoke();
                 return;
             }
 
-            OnLaunch.Invoke();
+            if (!IsClearToLaunch)
+            {
+                OnLaunchBlocked.Invoke();
+                return;
+            }
 
             lastLaunchTime = Time.time;
             rocketsInClip--;
+            OnLaunch.Invoke();
 
             var jumpCollider = jumpController.GetComponent<Collider>();
-            foreach (var spawnPoint in rocketSpawnPoints)
+            foreach (var launchPoint in launchPoints)
             {
-                var rocket = Instantiate(rocketPrefab, spawnPoint.position, spawnPoint.rotation); // TODO: Add check to make sure point isn't in a collider
+                var rocket = Instantiate(rocketPrefab, launchPoint.position, launchPoint.rotation);
                 rocket.Rigidbody.velocity = jumpController.Rigidbody.velocity;
                 rocket.Rigidbody.AddRelativeForce(launchForce * Vector3.forward, ForceMode.Impulse);
 
@@ -67,12 +103,10 @@ namespace PilotPursuit.Gadgets
         }
         #endregion
 
+        #region Reload
         [ContextMenu("Reload")]
         public void Reload() => Reload(clipSize);
 
-        /// <summary>
-        /// Adds <paramref name="rocketCount"/> rockets to <see cref="rocketsInClip"/> up to <see cref="clipSize"/>
-        /// </summary>
         public void Reload(int rocketCount)
         {
             if (rocketCount <= 0) Debug.LogWarning($"{nameof(rocketCount)} was '{rocketCount}', should be > 0.");
@@ -80,17 +114,27 @@ namespace PilotPursuit.Gadgets
             rocketsInClip = rocketCount == 0 ? clipSize : Mathf.Clamp(rocketsInClip + rocketCount, 0, clipSize);
 
             OnReload.Invoke();
-        } 
+        }
+        #endregion
 
         #region Debug
         private bool CheckReferences()
         {
             if (jumpController == null) Debug.LogError($"{nameof(jumpController)} is not assigned on {name}'s {GetType().Name}");
             if (rocketPrefab == null) Debug.LogError($"{nameof(rocketPrefab)} is not assigned on {name}'s {GetType().Name}");
-            if (rocketSpawnPoints.Length == 0) Debug.LogError($"{nameof(rocketSpawnPoints)} is empty on {name}'s {GetType().Name}");
+            if (launchPoints.Length == 0) Debug.LogError($"{nameof(launchPoints)} is empty on {name}'s {GetType().Name}");
             else return true;
 
             return false;
+        }
+
+        private void AddLogToEvents()
+        {
+            OnLaunchFailed.AddListener(() => Debug.Log(GetType().Name + ": " + nameof(OnLaunchFailed)));
+            OnLaunchBlocked.AddListener(() => Debug.Log(GetType().Name + ": " + nameof(OnLaunchBlocked)));
+            OnLaunch.AddListener(() => Debug.Log(GetType().Name + ": " + nameof(OnLaunch)));
+            OnLastRocket.AddListener(() => Debug.Log(GetType().Name + ": " + nameof(OnLastRocket)));
+            OnReload.AddListener(() => Debug.Log(GetType().Name + ": " + nameof(OnReload)));
         }
         #endregion
     }

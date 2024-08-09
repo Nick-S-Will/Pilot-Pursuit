@@ -26,8 +26,9 @@ namespace PilotPursuit.Movement
             {
                 var clampedPitch = Mathf.Clamp(value, -maxPitchRotation, maxPitchRotation);
 
-                var euler = cameraTransform.localEulerAngles;
-                cameraTransform.localEulerAngles = new Vector3(clampedPitch, euler.y, euler.z);
+                var localEuler = cameraTransform.localEulerAngles;
+                localEuler.x = clampedPitch;
+                cameraTransform.localEulerAngles = localEuler;
             }
         }
 
@@ -51,7 +52,12 @@ namespace PilotPursuit.Movement
         #region Rotate
         public void Rotate(InputAction.CallbackContext context) => Rotate(context.ReadValue<Vector2>());
 
-        public void Rotate(Vector2 rotationInput) => rotationInputSinceUpdate += rotationInput;
+        public void Rotate(Vector2 rotationInput)
+        {
+            if (!enabled) return;
+
+            rotationInputSinceUpdate += rotationInput;
+        }
 
         private void UpdateRigidbodyRotation()
         {

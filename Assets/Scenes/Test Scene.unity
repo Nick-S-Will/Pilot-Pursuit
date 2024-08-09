@@ -566,6 +566,7 @@ MonoBehaviour:
   OnStopMoving:
     m_PersistentCalls:
       m_Calls: []
+  logEvents: 0
 --- !u!114 &604522414
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -621,6 +622,18 @@ MonoBehaviour:
           m_StringArgument: 
           m_BoolArgument: 0
         m_CallState: 2
+      - m_Target: {fileID: 604522417}
+        m_TargetAssemblyTypeName: PilotPursuit.Gadgets.RocketJumpController, Assembly-CSharp
+        m_MethodName: TryLaunch
+        m_Mode: 0
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
     m_ActionId: 15c8267b-95f9-4ca1-9b71-416867c64b1a
     m_ActionName: Player/Jump[/Keyboard/space]
   - m_PersistentCalls:
@@ -639,22 +652,6 @@ MonoBehaviour:
         m_CallState: 2
     m_ActionId: 45dc47c5-5172-4f14-9a1e-6bb2b1398f01
     m_ActionName: Player/Rotate[/Mouse/delta]
-  - m_PersistentCalls:
-      m_Calls:
-      - m_Target: {fileID: 604522417}
-        m_TargetAssemblyTypeName: PilotPursuit.Gadgets.RocketJumpController, Assembly-CSharp
-        m_MethodName: TryLaunch
-        m_Mode: 0
-        m_Arguments:
-          m_ObjectArgument: {fileID: 0}
-          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
-          m_IntArgument: 0
-          m_FloatArgument: 0
-          m_StringArgument: 
-          m_BoolArgument: 0
-        m_CallState: 2
-    m_ActionId: 3550f766-60bf-4f6b-90fd-89e2f2936c44
-    m_ActionName: Player/Rocket Jump[/Keyboard/leftShift]
   m_NeverAutoSwitchControlSchemes: 0
   m_DefaultControlScheme: Mouse Keyboard
   m_DefaultActionMap: Player
@@ -691,6 +688,7 @@ MonoBehaviour:
   OnLand:
     m_PersistentCalls:
       m_Calls: []
+  logEvents: 0
 --- !u!114 &604522416
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -721,12 +719,19 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   jumpController: {fileID: 604522415}
   rocketPrefab: {fileID: 3603059054087938404, guid: 5edfcc2af81230043908c85f50e8c7cc, type: 3}
-  rocketSpawnPoints:
+  launchPoints:
   - {fileID: 842443733}
-  launchForce: 50
+  launchForce: 100
   launchInterval: 3
   clipSize: 3
+  obstacleMask:
+    serializedVersion: 2
+    m_Bits: 1
+  obstacleCheckExtents: {x: 0.05, y: 0.05, z: 0.05}
   OnLaunchFailed:
+    m_PersistentCalls:
+      m_Calls: []
+  OnLaunchBlocked:
     m_PersistentCalls:
       m_Calls: []
   OnLaunch:
@@ -738,6 +743,7 @@ MonoBehaviour:
   OnReload:
     m_PersistentCalls:
       m_Calls: []
+  logEvents: 1
 --- !u!1 &674736395
 GameObject:
   m_ObjectHideFlags: 0
@@ -875,7 +881,7 @@ GameObject:
   - component: {fileID: 842443735}
   - component: {fileID: 842443734}
   m_Layer: 3
-  m_Name: Rocket Point
+  m_Name: Launch Point
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

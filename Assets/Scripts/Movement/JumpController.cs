@@ -13,6 +13,7 @@ namespace PilotPursuit.Movement
         [SerializeField][Min(0f)] private float jumpTime = .15f, jumpForce = 3000f, jumpBufferTime = .1f, coyoteTime = .1f;
         [Header("Physics Checks")]
         [SerializeField] private LayerMask groundMask;
+        [Tooltip("Set to 0 to disable ground check (always on ground).")]
         [SerializeField][Min(0f)] private float maxGroundDistance = .1f;
         /// <summary>
         /// Passes the charge percentage [0, 1] each update of <see cref="ChargeJumpRoutine"/>
@@ -20,22 +21,27 @@ namespace PilotPursuit.Movement
         [Header("Events")]
         public UnityEvent<float> OnChargingJump;
         public UnityEvent OnJump, OnLand;
+        [Header("Debug")]
+        [SerializeField] private bool logEvents;
 
         private Coroutine jumpRoutine;
-        private float lastGroundTime;
-        private bool chargingJump;
+        private float lastGroundTime, lastJumpTime;
 
         public Rigidbody Rigidbody => rigidbody;
-        public bool IsOnGround => lastGroundTime + coyoteTime > Time.time;
-
+        public bool IsOnGround => maxGroundDistance == 0f || (lastGroundTime + coyoteTime > Time.time && !HasJustJumped);
+        public bool IsChargingJump { get; private set; }
+        public bool HasJustJumped => lastJumpTime + jumpTime > Time.time;
+        
         private void Awake()
         {
             if (!CheckReferences()) enabled = false;
+            if (logEvents) AddLogToEvents();
         }
 
         private void Start()
         {
             lastGroundTime = -coyoteTime;
+            lastJumpTime = -jumpTime;
         }
 
         private void FixedUpdate()
@@ -46,6 +52,8 @@ namespace PilotPursuit.Movement
         #region Physics Checks
         private void UpdateLastGroundTime()
         {
+            if (maxGroundDistance == 0f || HasJustJumped) return;
+            
             var groundColliders = new Collider[1];
             var groundColliderCount = Physics.OverlapSphereNonAlloc(transform.position, maxGroundDistance, groundColliders, groundMask);
 
@@ -68,7 +76,7 @@ namespace PilotPursuit.Movement
         {
             if (!enabled) return;
 
-            chargingJump = true;
+            IsChargingJump = true;
             jumpRoutine ??= StartCoroutine(ChargeJumpRoutine());
         }
 
@@ -83,7 +91,7 @@ namespace PilotPursuit.Movement
             else
             {
                 float startTime = Time.time;
-                while (chargingJump && chargePercent < 1f)
+                while (IsChargingJump && chargePercent < 1f)
                 {
                     chargePercent = Mathf.Min((Time.time - startTime) / chargeTime, 1f);
                     OnChargingJump.Invoke(chargePercent);
@@ -91,7 +99,7 @@ namespace PilotPursuit.Movement
                     yield return new WaitForFixedUpdate();
                 }
             }
-            yield return new WaitWhile(() => chargingJump);
+            yield return new WaitWhile(() => IsChargingJump);
 
             yield return StartCoroutine(TryJumpRoutine(chargePercent));
 
@@ -104,8 +112,8 @@ namespace PilotPursuit.Movement
         {
             if (!enabled) return;
 
-            if (!chargingJump) Debug.LogWarning("Jump must be charged first");
-            chargingJump = false;
+            if (!IsChargingJump) Debug.LogWarning("Jump must be charged first");
+            IsChargingJump = false;
         }
 
         private IEnumerator TryJumpRoutine(float chargePercent)
@@ -114,6 +122,7 @@ namespace PilotPursuit.Movement
             while (Time.time < startTime + jumpBufferTime && !IsOnGround) yield return new WaitForFixedUpdate();
             if (!IsOnGround) yield break;
 
+            lastJumpTime = Time.time;
             OnJump.Invoke();
 
             if (jumpTime == 0f) ApplyJumpForce(chargePercent, ForceMode.Impulse);
@@ -142,6 +151,13 @@ namespace PilotPursuit.Movement
             else return true;
 
             return false;
+        }
+
+        private void AddLogToEvents()
+        {
+            OnChargingJump.AddListener(_ => Debug.Log(GetType().Name + ": " + nameof(OnChargingJump)));
+            OnJump.AddListener(() => Debug.Log(GetType().Name + ": " + nameof(OnJump)));
+            OnLand.AddListener(() => Debug.Log(GetType().Name + ": " + nameof(OnLand)));
         }
         #endregion
     }

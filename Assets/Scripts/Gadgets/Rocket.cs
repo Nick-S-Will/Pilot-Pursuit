@@ -16,6 +16,8 @@ namespace PilotPursuit.Gadgets
         [SerializeField] private LayerMask explosionMask;
         [Header("Events")]
         public UnityEvent OnExplode;
+        [Header("Debug")]
+        [SerializeField] private bool logEvents;
 
         private Coroutine explosionRoutine;
 
@@ -25,6 +27,7 @@ namespace PilotPursuit.Gadgets
         private void Awake()
         {
             if (!CheckReferences()) enabled = false;
+            if (logEvents) AddLogToEvents();
         }
 
         private void OnCollisionEnter(Collision collision)
@@ -72,6 +75,11 @@ namespace PilotPursuit.Gadgets
             else return true;
 
             return false;
+        }
+
+        private void AddLogToEvents()
+        {
+            OnExplode.AddListener(() => Debug.Log(GetType().Name + ": " + nameof(OnExplode)));
         }
         #endregion
     }

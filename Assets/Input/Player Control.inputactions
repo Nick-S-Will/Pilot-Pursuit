@@ -31,15 +31,6 @@
                     "processors": "",
                     "interactions": "",
                     "initialStateCheck": true
-                },
-                {
-                    "name": "Rocket Jump",
-                    "type": "Button",
-                    "id": "3550f766-60bf-4f6b-90fd-89e2f2936c44",
-                    "expectedControlType": "Button",
-                    "processors": "",
-                    "interactions": "",
-                    "initialStateCheck": true
                 }
             ],
             "bindings": [
@@ -150,28 +141,6 @@
                     "processors": "",
                     "groups": "Gamepad",
                     "action": "Rotate",
-                    "isComposite": false,
-                    "isPartOfComposite": false
-                },
-                {
-                    "name": "",
-                    "id": "e925b2a7-ae77-4c03-92f6-ad21c3262757",
-                    "path": "<Keyboard>/leftShift",
-                    "interactions": "",
-                    "processors": "",
-                    "groups": "Mouse Keyboard",
-                    "action": "Rocket Jump",
-                    "isComposite": false,
-                    "isPartOfComposite": false
-                },
-                {
-                    "name": "",
-                    "id": "66a9c50f-8845-43ff-86da-738a0119623d",
-                    "path": "<Gamepad>/rightShoulder",
-                    "interactions": "",
-                    "processors": "",
-                    "groups": "Gamepad",
-                    "action": "Rocket Jump",
                     "isComposite": false,
                     "isPartOfComposite": false
                 }

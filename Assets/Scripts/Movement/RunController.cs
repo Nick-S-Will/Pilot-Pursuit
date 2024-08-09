@@ -12,10 +12,14 @@ namespace PilotPursuit.Movement
         [SerializeField] private Vector3 airMoveForce = 100 * Vector3.one;
         [Header("Physics Checks")]
         [SerializeField] private LayerMask groundMask;
-        [SerializeField][Min(0f)] private float maxGroundDistance = .1f, minSpeed = 0.01f;
+        [Tooltip("Set to 0 to disable ground check (always on ground).")]
+        [SerializeField][Min(0f)] private float maxGroundDistance = .1f;
+        [SerializeField][Min(0f)] private float minSpeed = 0.01f;
         [Header("Events")]
         public UnityEvent OnStartMoving;
         public UnityEvent OnStopMoving;
+        [Header("Debug")]
+        [SerializeField] private bool logEvents;
 
         private Vector2 moveInput;
         private Vector3 lastVelocity;
@@ -26,6 +30,7 @@ namespace PilotPursuit.Movement
         private void Awake()
         {
             if (!CheckReferences()) enabled = false;
+            if (logEvents) AddLogToEvents();
         }
 
         private void FixedUpdate()
@@ -40,6 +45,12 @@ namespace PilotPursuit.Movement
         #region Physics Checks
         private void CheckOnGround()
         {
+            if (maxGroundDistance == 0f)
+            {
+                IsOnGround = true;
+                return;
+            }
+
             var groundColliders = new Collider[1];
             var groundColliderCount = Physics.OverlapSphereNonAlloc(transform.position, maxGroundDistance, groundColliders, groundMask);
             IsOnGround = groundColliderCount > 0;
@@ -82,6 +93,12 @@ namespace PilotPursuit.Movement
             else return true;
 
             return false;
+        }
+
+        private void AddLogToEvents()
+        {
+            OnStartMoving.AddListener(() => Debug.Log(GetType().Name + ": " + nameof(OnStartMoving)));
+            OnStopMoving.AddListener(() => Debug.Log(GetType().Name + ": " + nameof(OnStartMoving)));
         }
         #endregion
     }
