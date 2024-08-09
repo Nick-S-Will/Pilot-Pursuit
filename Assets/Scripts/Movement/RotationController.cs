@@ -78,7 +78,7 @@ namespace PilotPursuit.Movement
         #region Debug
         private bool CheckReferences()
         {
-            if (cameraTransform == null) Debug.LogError($"{nameof(cameraTransform)} is not assigned on {name}'s {nameof(RotationController)}");
+            if (cameraTransform == null) Debug.LogError($"{nameof(cameraTransform)} is not assigned on {name}'s {GetType().Name}");
             else return true;
 
             return false;

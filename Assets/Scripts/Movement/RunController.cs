@@ -10,7 +10,7 @@ namespace PilotPursuit.Movement
         [Header("Move Settings")]
         [SerializeField] private Vector3 groundMoveForce = 1000 * Vector3.one;
         [SerializeField] private Vector3 airMoveForce = 100 * Vector3.one;
-        [Header("Physics Check")]
+        [Header("Physics Checks")]
         [SerializeField] private LayerMask groundMask;
         [SerializeField][Min(0f)] private float maxGroundDistance = .1f, minSpeed = 0.01f;
         [Header("Events")]
@@ -20,7 +20,8 @@ namespace PilotPursuit.Movement
         private Vector2 moveInput;
         private Vector3 lastVelocity;
 
-        public bool OnGround { get; private set; }
+        public Rigidbody Rigidbody => rigidbody;
+        public bool IsOnGround { get; private set; }
 
         private void Awake()
         {
@@ -41,7 +42,7 @@ namespace PilotPursuit.Movement
         {
             var groundColliders = new Collider[1];
             var groundColliderCount = Physics.OverlapSphereNonAlloc(transform.position, maxGroundDistance, groundColliders, groundMask);
-            OnGround = groundColliderCount > 0;
+            IsOnGround = groundColliderCount > 0;
         }
 
         private void CheckMoving()
@@ -68,7 +69,7 @@ namespace PilotPursuit.Movement
             if (moveInput == Vector2.zero) return;
 
             var localMoveInput = new Vector3(moveInput.x, 0, moveInput.y);
-            var localMoveForce = Vector3.Scale(localMoveInput, OnGround ? groundMoveForce : airMoveForce);
+            var localMoveForce = Vector3.Scale(localMoveInput, IsOnGround ? groundMoveForce : airMoveForce);
 
             rigidbody.AddRelativeForce(localMoveForce);
         }
@@ -77,7 +78,7 @@ namespace PilotPursuit.Movement
         #region Debug
         private bool CheckReferences()
         {
-            if (rigidbody == null) Debug.LogError($"{nameof(rigidbody)} is not assigned on {name}'s {nameof(RunController)}");
+            if (rigidbody == null) Debug.LogError($"{nameof(rigidbody)} is not assigned on {name}'s {GetType().Name}");
             else return true;
 
             return false;

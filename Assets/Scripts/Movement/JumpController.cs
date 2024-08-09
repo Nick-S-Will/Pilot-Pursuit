@@ -25,11 +25,17 @@ namespace PilotPursuit.Movement
         private float lastGroundTime;
         private bool chargingJump;
 
-        public bool OnGround => lastGroundTime + coyoteTime > Time.time;
+        public Rigidbody Rigidbody => rigidbody;
+        public bool IsOnGround => lastGroundTime + coyoteTime > Time.time;
 
         private void Awake()
         {
             if (!CheckReferences()) enabled = false;
+        }
+
+        private void Start()
+        {
+            lastGroundTime = -coyoteTime;
         }
 
         private void FixedUpdate()
@@ -45,13 +51,13 @@ namespace PilotPursuit.Movement
 
             if (groundColliderCount > 0)
             {
-                if (!OnGround) OnLand.Invoke();
+                if (!IsOnGround) OnLand.Invoke();
                 lastGroundTime = Time.time;
             }
         }
         #endregion
 
-        #region Jump
+        #region Charge Jump
         public void ChargeJump(InputAction.CallbackContext context)
         {
             if (context.started) ChargeJump();
@@ -60,19 +66,30 @@ namespace PilotPursuit.Movement
 
         public void ChargeJump()
         {
+            if (!enabled) return;
+
             chargingJump = true;
             jumpRoutine ??= StartCoroutine(ChargeJumpRoutine());
         }
 
         private IEnumerator ChargeJumpRoutine()
         {
-            float startTime = Time.time, chargePercent = 0f;
-            while (chargingJump && chargePercent < 1f)
+            float chargePercent = 0f;
+            if (chargeTime == 0f)
             {
-                chargePercent = Mathf.Min((Time.time - startTime) / chargeTime, 1f);
+                chargePercent = 1f;
                 OnChargingJump.Invoke(chargePercent);
+            }
+            else
+            {
+                float startTime = Time.time;
+                while (chargingJump && chargePercent < 1f)
+                {
+                    chargePercent = Mathf.Min((Time.time - startTime) / chargeTime, 1f);
+                    OnChargingJump.Invoke(chargePercent);
 
-                yield return new WaitForFixedUpdate();
+                    yield return new WaitForFixedUpdate();
+                }
             }
             yield return new WaitWhile(() => chargingJump);
 
@@ -80,9 +97,13 @@ namespace PilotPursuit.Movement
 
             jumpRoutine = null;
         }
+        #endregion
 
+        #region Jump
         public void TryJump()
         {
+            if (!enabled) return;
+
             if (!chargingJump) Debug.LogWarning("Jump must be charged first");
             chargingJump = false;
         }
@@ -90,25 +111,34 @@ namespace PilotPursuit.Movement
         private IEnumerator TryJumpRoutine(float chargePercent)
         {
             var startTime = Time.time;
-            while (Time.time < startTime + jumpBufferTime && !OnGround) yield return new WaitForFixedUpdate();
-            if (!OnGround) yield break;
+            while (Time.time < startTime + jumpBufferTime && !IsOnGround) yield return new WaitForFixedUpdate();
+            if (!IsOnGround) yield break;
 
             OnJump.Invoke();
 
-            startTime = Time.time;
-            while (Time.time < startTime + jumpTime)
+            if (jumpTime == 0f) ApplyJumpForce(chargePercent, ForceMode.Impulse);
+            else
             {
-                rigidbody.AddRelativeForce(chargePercent * jumpForce * Vector3.up);
+                startTime = Time.time;
+                while (Time.time < startTime + jumpTime)
+                {
+                    ApplyJumpForce(chargePercent);
 
-                yield return new WaitForFixedUpdate();
+                    yield return new WaitForFixedUpdate();
+                }
             }
+        }
+
+        private void ApplyJumpForce(float chargePercent, ForceMode forceMode = ForceMode.Force)
+        {
+            rigidbody.AddRelativeForce(chargePercent * jumpForce * Vector3.up, forceMode);
         }
         #endregion
 
         #region Debug
         private bool CheckReferences()
         {
-            if (rigidbody == null) Debug.LogError($"{nameof(rigidbody)} is not assigned on {name}'s {nameof(JumpController)}");
+            if (rigidbody == null) Debug.LogError($"{nameof(rigidbody)} is not assigned on {name}'s {GetType().Name}");
             else return true;
 
             return false;
