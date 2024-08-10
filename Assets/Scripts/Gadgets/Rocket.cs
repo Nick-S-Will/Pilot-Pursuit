@@ -51,6 +51,7 @@ namespace PilotPursuit.Gadgets
                 {
                     ApplyExplosionForce(rigidbodiesInRange);
 
+                    if (!enabled) yield return new WaitUntil(() => enabled);
                     yield return new WaitForFixedUpdate();
                 }
             }
@@ -71,7 +72,7 @@ namespace PilotPursuit.Gadgets
         private bool CheckReferences()
         {
             if (rigidbody == null) Debug.LogError($"{nameof(rigidbody)} is not assigned on {name}'s {GetType().Name}");
-            if (collider == null) Debug.LogError($"{nameof(collider)} is not assigned on {name}'s {GetType().Name}");
+            else if (collider == null) Debug.LogError($"{nameof(collider)} is not assigned on {name}'s {GetType().Name}");
             else return true;
 
             return false;

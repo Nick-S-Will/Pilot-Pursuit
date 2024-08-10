@@ -96,6 +96,7 @@ namespace PilotPursuit.Movement
                     chargePercent = Mathf.Min((Time.time - startTime) / chargeTime, 1f);
                     OnChargingJump.Invoke(chargePercent);
 
+                    if (!enabled) yield return new WaitUntil(() => enabled);
                     yield return new WaitForFixedUpdate();
                 }
             }
@@ -133,6 +134,7 @@ namespace PilotPursuit.Movement
                 {
                     ApplyJumpForce(chargePercent);
 
+                    if (!enabled) yield return new WaitUntil(() => enabled);
                     yield return new WaitForFixedUpdate();
                 }
             }

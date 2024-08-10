@@ -14,6 +14,7 @@ namespace PilotPursuit.Gadgets
         [SerializeField][Min(0f)] private float launchForce = 1000f;
         [SerializeField][Min(0f)] private float launchInterval = 3f;
         [SerializeField][Min(1f)] private int clipSize = 3;
+        [SerializeField] private bool mustBeInAir = true;
         [Header("Physics Checks")]
         [SerializeField] private LayerMask obstacleMask;
         [Tooltip("Set to (0, 0, 0) to disable obstacle check.")]
@@ -71,7 +72,7 @@ namespace PilotPursuit.Gadgets
 
         public void TryLaunch()
         {
-            if (!enabled || jumpController.IsOnGround) return;
+            if (!enabled || (mustBeInAir && jumpController.IsOnGround)) return;
 
             if (!IsReadyToLaunch)
             {
@@ -121,8 +122,8 @@ namespace PilotPursuit.Gadgets
         private bool CheckReferences()
         {
             if (jumpController == null) Debug.LogError($"{nameof(jumpController)} is not assigned on {name}'s {GetType().Name}");
-            if (rocketPrefab == null) Debug.LogError($"{nameof(rocketPrefab)} is not assigned on {name}'s {GetType().Name}");
-            if (launchPoints.Length == 0) Debug.LogError($"{nameof(launchPoints)} is empty on {name}'s {GetType().Name}");
+            else if (rocketPrefab == null) Debug.LogError($"{nameof(rocketPrefab)} is not assigned on {name}'s {GetType().Name}");
+            else if (launchPoints.Length == 0) Debug.LogError($"{nameof(launchPoints)} is empty on {name}'s {GetType().Name}");
             else return true;
 
             return false;

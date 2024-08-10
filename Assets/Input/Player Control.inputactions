@@ -31,6 +31,15 @@
                     "processors": "",
                     "interactions": "",
                     "initialStateCheck": true
+                },
+                {
+                    "name": "Grapple",
+                    "type": "Button",
+                    "id": "453c79e2-2a14-4204-bba2-695266e8786a",
+                    "expectedControlType": "Button",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
                 }
             ],
             "bindings": [
@@ -141,6 +150,28 @@
                     "processors": "",
                     "groups": "Gamepad",
                     "action": "Rotate",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "aeae826e-6c6d-46bc-9ba8-98baddc1d7cb",
+                    "path": "<Mouse>/leftButton",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "Mouse Keyboard",
+                    "action": "Grapple",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "329ba294-85ef-4daa-b92a-ab8c21a6f98e",
+                    "path": "<Gamepad>/rightTrigger",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "Gamepad",
+                    "action": "Grapple",
                     "isComposite": false,
                     "isPartOfComposite": false
                 }
