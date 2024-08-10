@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using UnityEngine;
 using UnityEngine.Events;
@@ -10,10 +11,14 @@ namespace PilotPursuit.Gadgets
         [SerializeField] private new Rigidbody rigidbody;
         [SerializeField] private Transform launchPointTransform, launchDirectionTransform;
         [SerializeField] private LineRenderer ropeRenderer;
-        [Header("Grapple Settings")]
+        [Header("Launch Settings")]
         [SerializeField][Min(1e-5f)] private float ropeLength = 30f;
-        [SerializeField][Min(1e-5f)] private float launchSpeed = 30f, grappleRange = 5e-2f, grappleMass = 10f, reelForce = 1000f;
-        [SerializeField] private bool disableRotationConstraintsDuringReelTo;
+        [SerializeField][Min(1e-5f)] private float launchSpeed = 30f, grappleRange = 5e-2f;
+        [Header("Reel Settings")]
+        [SerializeField][Min(1e-5f)] private float reelForce = 500f;
+        [SerializeField][Min(1e-5f)] private float grappleMass = 10f, rotationCorrectionSpeed = 180f;
+        [SerializeField][Range(0f, 1f)] private float rotationCorrectionBias = 0.5f;
+        [SerializeField] private bool disableRotationConstraintsDuringReelTo = true;
         [Header("Physics Checks")]
         [SerializeField] private LayerMask grappleMask;
         [Header("Events")]
@@ -25,6 +30,7 @@ namespace PilotPursuit.Gadgets
         private Coroutine grappleRoutine;
         private Vector3 ropeEndPoint;
 
+        public Func<Vector3> RotationCorrectionUpDirection { get; set; } = () => Vector3.up;
         public bool IsHoldingLaunch { get; private set; }
         public bool IsGrappling => grappleRoutine != null;
 
@@ -40,6 +46,7 @@ namespace PilotPursuit.Gadgets
         {
             ropeRenderer.enabled = true;
         }
+
         private void OnDisable()
         {
             ropeRenderer.enabled = false;
@@ -81,14 +88,12 @@ namespace PilotPursuit.Gadgets
             ropeEndPoint = ropeStartPoint;
             var direction = launchDirectionTransform.forward;
             RaycastHit hitInfo = default;
-            bool hasHit = false;
 
             while (IsHoldingLaunch && Vector3.Distance(ropeStartPoint, ropeEndPoint) <= ropeLength)
             {
                 var origin = ropeEndPoint - grappleRange * direction;
                 var deltaDistance = launchSpeed * Time.fixedDeltaTime;
-                hasHit = Physics.SphereCast(origin, grappleRange, direction, out hitInfo, grappleRange + deltaDistance, grappleMask);
-                if (hasHit)
+                if (Physics.SphereCast(origin, grappleRange, direction, out hitInfo, grappleRange + deltaDistance, grappleMask))
                 {
                     ropeEndPoint = hitInfo.point;
                     OnHit.Invoke();
@@ -101,8 +106,8 @@ namespace PilotPursuit.Gadgets
                 yield return new WaitForFixedUpdate();
             }
 
-            yield return StartCoroutine(hasHit ? ReelToRoutine(hitInfo) : ReelInRoutine());
-            OnReelComplete.Invoke();
+            yield return StartCoroutine(ReelToRoutine(hitInfo));
+            yield return StartCoroutine(ReelInRoutine());
 
             grappleRoutine = null;
         }
@@ -120,7 +125,9 @@ namespace PilotPursuit.Gadgets
 
         private IEnumerator ReelToRoutine(RaycastHit hitInfo)
         {
-            if (disableRotationConstraintsDuringReelTo) rigidbody.constraints &= ~RigidbodyConstraints.FreezeRotation; // TODO: Keep player fairly upright for this
+            if (hitInfo.collider == null) yield break;
+
+            if (disableRotationConstraintsDuringReelTo) rigidbody.constraints &= ~RigidbodyConstraints.FreezeRotation;
 
             var target = hitInfo.collider.transform;
             var localTargetPoint = target.InverseTransformPoint(hitInfo.point);
@@ -128,8 +135,9 @@ namespace PilotPursuit.Gadgets
             {
                 ropeEndPoint = target.TransformPoint(localTargetPoint);
                 var deltaToGrapple = ropeEndPoint - rigidbody.position;
-
                 rigidbody.AddForceAtPosition(reelForce * deltaToGrapple, launchPointTransform.position);
+
+                if (disableRotationConstraintsDuringReelTo) ApplyRotationCorrection();
 
                 if (!enabled) yield return new WaitUntil(() => enabled);
                 yield return new WaitForFixedUpdate();
@@ -143,12 +151,40 @@ namespace PilotPursuit.Gadgets
             float speed = 0f, acceleration = reelForce / grappleMass * Time.fixedDeltaTime;
             while (Vector3.Distance(launchPointTransform.position, ropeEndPoint) > 0f)
             {
+                if (!enabled) yield return new WaitUntil(() => enabled);
+                yield return new WaitForFixedUpdate();
+
                 speed += acceleration;
                 ropeEndPoint = Vector3.MoveTowards(ropeEndPoint, launchPointTransform.position, speed * Time.fixedDeltaTime);
 
-                if (!enabled) yield return new WaitUntil(() => enabled);
-                yield return new WaitForFixedUpdate();
+                if (disableRotationConstraintsDuringReelTo) ApplyRotationCorrection();
             }
+
+            rigidbody.MoveRotation(GetCorrectRotation());
+
+            OnReelComplete.Invoke();
+        }
+        #endregion
+
+        #region Rotation Correction
+        private void ApplyRotationCorrection()
+        {
+            var up = RotationCorrectionUpDirection();
+            var rigidbodyUp = rigidbody.rotation * up;
+            var angleFromUp = Vector3.Angle(rigidbodyUp, up);
+            if (angleFromUp == 0f) return;
+
+            var correctionBias = Mathf.Lerp(rotationCorrectionBias, 1f, angleFromUp / 180f);
+            var correctionAngle = correctionBias * rotationCorrectionSpeed * Time.fixedDeltaTime;
+            var rotation = Quaternion.RotateTowards(rigidbody.rotation, GetCorrectRotation(), correctionAngle);
+            rigidbody.MoveRotation(rotation);
+        }
+
+        private Quaternion GetCorrectRotation()
+        {
+            var up = RotationCorrectionUpDirection();
+            var forward = Vector3.ProjectOnPlane(rigidbody.rotation * Vector3.forward, up);
+            return Quaternion.LookRotation(forward, up);
         }
         #endregion
 
