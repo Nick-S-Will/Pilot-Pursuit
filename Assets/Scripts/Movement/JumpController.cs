@@ -26,10 +26,11 @@ namespace PilotPursuit.Movement
 
         private Coroutine jumpRoutine;
         private float lastGroundTime, lastJumpTime;
+        private bool isChargingJump;
 
         public Rigidbody Rigidbody => rigidbody;
         public bool IsOnGround => maxGroundDistance == 0f || (lastGroundTime + coyoteTime > Time.time && !HasJustJumped);
-        public bool IsChargingJump { get; private set; }
+        public bool IsChargingJump => enabled && isChargingJump;
         public bool HasJustJumped => lastJumpTime + jumpTime > Time.time;
         
         private void Awake()
@@ -76,7 +77,7 @@ namespace PilotPursuit.Movement
         {
             if (!enabled) return;
 
-            IsChargingJump = true;
+            isChargingJump = true;
             jumpRoutine ??= StartCoroutine(ChargeJumpRoutine());
         }
 
@@ -96,7 +97,6 @@ namespace PilotPursuit.Movement
                     chargePercent = Mathf.Min((Time.time - startTime) / chargeTime, 1f);
                     OnChargingJump.Invoke(chargePercent);
 
-                    if (!enabled) yield return new WaitUntil(() => enabled);
                     yield return new WaitForFixedUpdate();
                 }
             }
@@ -114,7 +114,7 @@ namespace PilotPursuit.Movement
             if (!enabled) return;
 
             if (!IsChargingJump) Debug.LogWarning("Jump must be charged first");
-            IsChargingJump = false;
+            isChargingJump = false;
         }
 
         private IEnumerator TryJumpRoutine(float chargePercent)
@@ -134,7 +134,6 @@ namespace PilotPursuit.Movement
                 {
                     ApplyJumpForce(chargePercent);
 
-                    if (!enabled) yield return new WaitUntil(() => enabled);
                     yield return new WaitForFixedUpdate();
                 }
             }

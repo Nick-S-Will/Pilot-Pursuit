@@ -29,13 +29,14 @@ namespace PilotPursuit.Gadgets
 
         private Coroutine grappleRoutine;
         private Vector3 ropeEndPoint;
+        private bool isHoldingLaunch;
 
         public Func<Vector3> RotationCorrectionUpDirection { get; set; } = () => Vector3.up;
         public Transform LaunchCastTransform => launchCastTransform;
         public float RopeLength => ropeLength;
         public float GrappleRange => grappleRange;
         public LayerMask GrappleMask => grappleMask;
-        public bool IsHoldingLaunch { get; private set; }
+        public bool IsHoldingLaunch => enabled && isHoldingLaunch;
         public bool IsGrappling => grappleRoutine != null;
 
         #region Unity Messages
@@ -82,7 +83,7 @@ namespace PilotPursuit.Gadgets
         {
             if (!enabled) return;
 
-            IsHoldingLaunch = true;
+            isHoldingLaunch = true;
             grappleRoutine ??= StartCoroutine(LaunchRoutine());
         }
 
@@ -108,7 +109,6 @@ namespace PilotPursuit.Gadgets
 
                 ropeEndPoint += deltaDistance * direction;
 
-                if (!enabled) yield return new WaitUntil(() => enabled);
                 yield return new WaitForFixedUpdate();
             }
 
@@ -126,7 +126,7 @@ namespace PilotPursuit.Gadgets
 
             if (IsHoldingLaunch) OnGrappleReleased.Invoke();
             else Debug.LogWarning("Grapple must be launched first");
-            IsHoldingLaunch = false;
+            isHoldingLaunch = false;
         }
 
         private IEnumerator ReelToRoutine(RaycastHit hitInfo)
@@ -147,7 +147,6 @@ namespace PilotPursuit.Gadgets
 
                 if (disableRotationConstraintsDuringReelTo) ApplyRotationCorrection();
 
-                if (!enabled) yield return new WaitUntil(() => enabled);
                 yield return new WaitForFixedUpdate();
             }
 
@@ -161,7 +160,6 @@ namespace PilotPursuit.Gadgets
             float speed = 0f, acceleration = reelForce / grappleMass * Time.fixedDeltaTime;
             while (Vector3.Distance(ropeStartPointTransform.position, ropeEndPoint) > 0f)
             {
-                if (!enabled) yield return new WaitUntil(() => enabled);
                 yield return new WaitForFixedUpdate();
 
                 speed += acceleration;

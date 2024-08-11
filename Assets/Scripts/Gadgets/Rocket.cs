@@ -47,11 +47,10 @@ namespace PilotPursuit.Gadgets
             else
             {
                 var startTime = Time.time;
-                while (Time.time < startTime + explosionDuration)
+                while (enabled && Time.time < startTime + explosionDuration)
                 {
                     ApplyExplosionForce(rigidbodiesInRange);
 
-                    if (!enabled) yield return new WaitUntil(() => enabled);
                     yield return new WaitForFixedUpdate();
                 }
             }
