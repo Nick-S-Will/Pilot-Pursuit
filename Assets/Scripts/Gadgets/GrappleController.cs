@@ -9,7 +9,7 @@ namespace PilotPursuit.Gadgets
     public class GrappleController : MonoBehaviour
     {
         [SerializeField] private new Rigidbody rigidbody;
-        [SerializeField] private Transform launchPointTransform, launchDirectionTransform;
+        [SerializeField] private Transform ropeStartPointTransform, launchCastTransform;
         [SerializeField] private LineRenderer ropeRenderer;
         [Header("Launch Settings")]
         [SerializeField][Min(1e-5f)] private float ropeLength = 30f;
@@ -23,7 +23,7 @@ namespace PilotPursuit.Gadgets
         [SerializeField] private LayerMask grappleMask;
         [Header("Events")]
         public UnityEvent OnGrapple;
-        public UnityEvent OnGrappleReleased, OnHit, OnReelComplete;
+        public UnityEvent OnGrappleReleased, OnHit, OnReelTo, OnReelIn, OnReelInComplete;
         [Header("Debug")]
         [SerializeField] private bool logEvents;
 
@@ -60,8 +60,8 @@ namespace PilotPursuit.Gadgets
         #region Rope
         private void UpdateRopeRenderer()
         {
-            ropeRenderer.SetPosition(0, launchPointTransform.position);
-            ropeRenderer.SetPosition(1, IsGrappling ? ropeEndPoint : launchPointTransform.position);
+            ropeRenderer.SetPosition(0, ropeStartPointTransform.position);
+            ropeRenderer.SetPosition(1, IsGrappling ? ropeEndPoint : ropeStartPointTransform.position);
         }
         #endregion
 
@@ -84,9 +84,9 @@ namespace PilotPursuit.Gadgets
         {
             OnGrapple.Invoke();
 
-            var ropeStartPoint = launchPointTransform.position;
+            var ropeStartPoint = launchCastTransform.position;
             ropeEndPoint = ropeStartPoint;
-            var direction = launchDirectionTransform.forward;
+            var direction = launchCastTransform.forward;
             RaycastHit hitInfo = default;
 
             while (IsHoldingLaunch && Vector3.Distance(ropeStartPoint, ropeEndPoint) <= ropeLength)
@@ -127,6 +127,8 @@ namespace PilotPursuit.Gadgets
         {
             if (hitInfo.collider == null) yield break;
 
+            OnReelTo.Invoke();
+
             if (disableRotationConstraintsDuringReelTo) rigidbody.constraints &= ~RigidbodyConstraints.FreezeRotation;
 
             var target = hitInfo.collider.transform;
@@ -135,7 +137,7 @@ namespace PilotPursuit.Gadgets
             {
                 ropeEndPoint = target.TransformPoint(localTargetPoint);
                 var deltaToGrapple = ropeEndPoint - rigidbody.position;
-                rigidbody.AddForceAtPosition(reelForce * deltaToGrapple, launchPointTransform.position);
+                rigidbody.AddForceAtPosition(reelForce * deltaToGrapple, ropeStartPointTransform.position);
 
                 if (disableRotationConstraintsDuringReelTo) ApplyRotationCorrection();
 
@@ -148,21 +150,23 @@ namespace PilotPursuit.Gadgets
 
         private IEnumerator ReelInRoutine()
         {
+            OnReelIn.Invoke();
+
             float speed = 0f, acceleration = reelForce / grappleMass * Time.fixedDeltaTime;
-            while (Vector3.Distance(launchPointTransform.position, ropeEndPoint) > 0f)
+            while (Vector3.Distance(ropeStartPointTransform.position, ropeEndPoint) > 0f)
             {
                 if (!enabled) yield return new WaitUntil(() => enabled);
                 yield return new WaitForFixedUpdate();
 
                 speed += acceleration;
-                ropeEndPoint = Vector3.MoveTowards(ropeEndPoint, launchPointTransform.position, speed * Time.fixedDeltaTime);
+                ropeEndPoint = Vector3.MoveTowards(ropeEndPoint, ropeStartPointTransform.position, speed * Time.fixedDeltaTime);
 
                 if (disableRotationConstraintsDuringReelTo) ApplyRotationCorrection();
             }
 
             rigidbody.MoveRotation(GetCorrectRotation());
 
-            OnReelComplete.Invoke();
+            OnReelInComplete.Invoke();
         }
         #endregion
 
@@ -192,8 +196,8 @@ namespace PilotPursuit.Gadgets
         private bool CheckReferences()
         {
             if (rigidbody == null) Debug.LogError($"{nameof(rigidbody)} is not assigned on {name}'s {GetType().Name}");
-            else if (launchPointTransform == null) Debug.LogError($"{nameof(launchPointTransform)} is not assigned on {name}'s {GetType().Name}");
-            else if (launchDirectionTransform == null) Debug.LogError($"{nameof(launchDirectionTransform)} is not assigned on {name}'s {GetType().Name}");
+            else if (ropeStartPointTransform == null) Debug.LogError($"{nameof(ropeStartPointTransform)} is not assigned on {name}'s {GetType().Name}");
+            else if (launchCastTransform == null) Debug.LogError($"{nameof(launchCastTransform)} is not assigned on {name}'s {GetType().Name}");
             else if (ropeRenderer == null) Debug.LogError($"{nameof(ropeRenderer)} is not assigned on {name}'s {GetType().Name}");
             else if (ropeRenderer.positionCount != 2) Debug.LogError($"{nameof(ropeRenderer)} on {name}'s {GetType().Name} should have 2 positions");
             else return true;
@@ -206,7 +210,9 @@ namespace PilotPursuit.Gadgets
             OnGrapple.AddListener(() => Debug.Log(GetType().Name + ": " + nameof(OnGrapple)));
             OnGrappleReleased.AddListener(() => Debug.Log(GetType().Name + ": " + nameof(OnGrappleReleased)));
             OnHit.AddListener(() => Debug.Log(GetType().Name + ": " + nameof(OnHit)));
-            OnReelComplete.AddListener(() => Debug.Log(GetType().Name + ": " + nameof(OnReelComplete)));
+            OnReelTo.AddListener(() => Debug.Log(GetType().Name + ": " + nameof(OnReelTo)));
+            OnReelIn.AddListener(() => Debug.Log(GetType().Name + ": " + nameof(OnReelIn)));
+            OnReelInComplete.AddListener(() => Debug.Log(GetType().Name + ": " + nameof(OnReelInComplete)));
         }
         #endregion
     }
