@@ -31,9 +31,14 @@ namespace PilotPursuit.Gadgets
         private Vector3 ropeEndPoint;
 
         public Func<Vector3> RotationCorrectionUpDirection { get; set; } = () => Vector3.up;
+        public Transform LaunchCastTransform => launchCastTransform;
+        public float RopeLength => ropeLength;
+        public float GrappleRange => grappleRange;
+        public LayerMask GrappleMask => grappleMask;
         public bool IsHoldingLaunch { get; private set; }
         public bool IsGrappling => grappleRoutine != null;
 
+        #region Unity Messages
         private void Awake()
         {
             if (!CheckReferences()) enabled = false;
@@ -56,6 +61,7 @@ namespace PilotPursuit.Gadgets
         {
             UpdateRopeRenderer();
         }
+        #endregion
 
         #region Rope
         private void UpdateRopeRenderer()
