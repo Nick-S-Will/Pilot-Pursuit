@@ -35,6 +35,7 @@ namespace PilotPursuit.Gadgets
             Explode();
         }
 
+        #region Explosion
         private void Explode() => explosionRoutine ??= StartCoroutine(Explosion());
 
         private IEnumerator Explosion()
@@ -66,6 +67,7 @@ namespace PilotPursuit.Gadgets
                 rigidbody.AddExplosionForce(explosionForce, this.rigidbody.position, explosionRadius, upwardsModifier, forceMode);
             }
         }
+        #endregion
 
         #region Debug
         private bool CheckReferences()
