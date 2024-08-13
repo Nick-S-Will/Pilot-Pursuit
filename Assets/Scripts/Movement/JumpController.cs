@@ -50,22 +50,6 @@ namespace PilotPursuit.Movement
             UpdateLastGroundTime();
         }
 
-        #region Physics Checks
-        private void UpdateLastGroundTime()
-        {
-            if (maxGroundDistance == 0f || HasJustJumped) return;
-            
-            var groundColliders = new Collider[1];
-            var groundColliderCount = Physics.OverlapSphereNonAlloc(transform.position, maxGroundDistance, groundColliders, groundMask);
-
-            if (groundColliderCount > 0)
-            {
-                if (!IsOnGround) OnLand.Invoke();
-                lastGroundTime = Time.time;
-            }
-        }
-        #endregion
-
         #region Charge Jump
         public void ChargeJump(InputAction.CallbackContext context)
         {
@@ -142,6 +126,22 @@ namespace PilotPursuit.Movement
         private void ApplyJumpForce(float chargePercent, ForceMode forceMode = ForceMode.Force)
         {
             rigidbody.AddRelativeForce(chargePercent * jumpForce * Vector3.up, forceMode);
+        }
+        #endregion
+
+        #region Physics Checks
+        private void UpdateLastGroundTime()
+        {
+            if (maxGroundDistance == 0f || HasJustJumped) return;
+
+            var groundColliders = new Collider[1];
+            var groundColliderCount = Physics.OverlapSphereNonAlloc(transform.position, maxGroundDistance, groundColliders, groundMask);
+
+            if (groundColliderCount > 0)
+            {
+                if (!IsOnGround) OnLand.Invoke();
+                lastGroundTime = Time.time;
+            }
         }
         #endregion
 
