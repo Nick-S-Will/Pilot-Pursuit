@@ -1,4 +1,3 @@
-using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -8,6 +7,8 @@ namespace PilotPursuit.Gadgets.UI
     {
         [SerializeField] private GrappleController grapple;
         [SerializeField] private Image backgroundImage, fillImage;
+        [Tooltip("Array of " + nameof(GameObject) + "s to enable/disable with this")]
+        [SerializeField] private GameObject[] otherVisuals;
         [Header("Visual Settings")]
         [SerializeField] private Color targetColor = Color.green;
         [SerializeField] private Color noTargetColor = Color.black, grapplingColor = Color.red, fillColor = Color.blue;
@@ -20,8 +21,7 @@ namespace PilotPursuit.Gadgets.UI
 
         private void OnDisable()
         {
-            backgroundImage.enabled = false;
-            fillImage.enabled = false;
+            SetVisible(false);
         }
 
         private void Start()
@@ -31,10 +31,8 @@ namespace PilotPursuit.Gadgets.UI
 
         private void Update()
         {
-            var isVisible = grapple.enabled;
-            backgroundImage.enabled = isVisible;
-            fillImage.enabled = isVisible;
-            if (!isVisible) return;
+            SetVisible(grapple.enabled);
+            if (!grapple.enabled) return;
 
             if (grapple.IsGrappling)
             {
@@ -51,6 +49,19 @@ namespace PilotPursuit.Gadgets.UI
                 var fillAmount = Mathf.Lerp(0f, maxFill, targetInfo.distance / grapple.RopeLength);
                 fillImage.fillAmount = fillAmount;
             }
+        }
+
+        [ContextMenu("Show UI")]
+        private void Show() => SetVisible(true);
+
+        [ContextMenu("Hide UI")]
+        private void Hide() => SetVisible(false);
+
+        private void SetVisible(bool visible)
+        {
+            backgroundImage.enabled = visible;
+            fillImage.enabled = visible;
+            foreach (var obj in otherVisuals) obj.SetActive(visible);
         }
 
         #region Debug

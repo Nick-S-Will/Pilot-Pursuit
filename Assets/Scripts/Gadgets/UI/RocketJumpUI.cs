@@ -9,6 +9,8 @@ namespace PilotPursuit.Gadgets.UI
         [SerializeField] private RocketJumpController rocketJump;
         [SerializeField] private Image fillImage;
         [SerializeField] private TMP_Text rocketCountText;
+        [Tooltip("Array of " + nameof(GameObject) + "s to enable/disable with this")]
+        [SerializeField] private GameObject[] otherVisuals;
         [Header("Visual Settings")]
         [SerializeField] private Color loadingColor = Color.red;
         [SerializeField] private Color readyColor = Color.green;
@@ -18,10 +20,10 @@ namespace PilotPursuit.Gadgets.UI
         {
             if (!CheckReferences()) enabled = false;
         }
+
         private void OnDisable()
         {
-            fillImage.enabled = false;
-            rocketCountText.enabled = false;
+            SetVisible(false);
         }
 
         private void Start()
@@ -32,9 +34,8 @@ namespace PilotPursuit.Gadgets.UI
 
         private void Update()
         {
-            var isVisible = rocketJump.enabled;
-            fillImage.enabled = isVisible;
-            if (!isVisible) return;
+            SetVisible(rocketJump.enabled);
+            if (!rocketJump.enabled) return;
 
             var color = rocketJump.IsReadyToLaunch ? readyColor : loadingColor;
             fillImage.color = color;
@@ -42,6 +43,19 @@ namespace PilotPursuit.Gadgets.UI
 
             rocketCountText.color = color;
             rocketCountText.text = rocketJump.RocketsInClip.ToString();
+        }
+
+        [ContextMenu("Show UI")]
+        private void Show() => SetVisible(true);
+
+        [ContextMenu("Hide UI")]
+        private void Hide() => SetVisible(false);
+
+        private void SetVisible(bool visible)
+        {
+            fillImage.enabled = visible;
+            rocketCountText.enabled = visible;
+            foreach (var obj in otherVisuals) obj.SetActive(visible);
         }
 
         #region Debug
