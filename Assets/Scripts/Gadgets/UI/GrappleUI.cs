@@ -39,7 +39,7 @@ namespace PilotPursuit.Gadgets.UI
             if (grapple.IsGrappling)
             {
                 backgroundImage.color = grapplingColor;
-                fillImage.fillAmount = GetFillAmount(grapple.RopeUsage);
+                fillImage.fillAmount = Mathf.Lerp(0f, maxFill, grapple.RopeUsage);
             }
             else
             {
@@ -48,12 +48,10 @@ namespace PilotPursuit.Gadgets.UI
                 fillImage.enabled = hasTarget;
                 if (!hasTarget) return;
 
-                var fillAmount = GetFillAmount(targetInfo.distance / grapple.RopeLength);
+                var fillAmount = Mathf.Lerp(0f, maxFill, targetInfo.distance / grapple.RopeLength);
                 fillImage.fillAmount = fillAmount;
             }
         }
-
-        private float GetFillAmount(float percent) => Mathf.Lerp(0f, maxFill, percent);
 
         #region Debug
         private void OnValidate()

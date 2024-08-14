@@ -28,6 +28,8 @@ namespace PilotPursuit.Gadgets
         private float lastLaunchTime;
         private int rocketsInClip;
 
+        public float LoadingPercent => Mathf.Clamp01((Time.time - lastLaunchTime) / launchInterval);
+        public int RocketsInClip => rocketsInClip;
         /// <summary>
         /// True if launcher has rockets loaded
         /// </summary>
@@ -112,6 +114,7 @@ namespace PilotPursuit.Gadgets
         {
             if (rocketCount <= 0) Debug.LogWarning($"{nameof(rocketCount)} was '{rocketCount}', should be > 0.");
 
+            lastLaunchTime = 0f;
             rocketsInClip = rocketCount == 0 ? clipSize : Mathf.Clamp(rocketsInClip + rocketCount, 0, clipSize);
 
             OnReload.Invoke();
