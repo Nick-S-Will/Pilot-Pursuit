@@ -2,7 +2,7 @@ using UnityEngine;
 
 namespace PilotPursuit.Gadgets
 {
-    public class GrappleRopeWave : MonoBehaviour
+    public class GrappleRopeRenderer : MonoBehaviour
     {
         [SerializeField] private GrappleController grapple;
         [SerializeField] private LineRenderer ropeRenderer;
@@ -27,21 +27,22 @@ namespace PilotPursuit.Gadgets
             ropeRenderer.enabled = isVisible;
             if (!isVisible) return;
 
-            var startPoint = grapple.ReelPointTransform.position;
             var middleIndex = (ropeRenderer.positionCount - 1) / 2f;
-            var ropeUsage = Mathf.Clamp01(Vector3.Distance(startPoint, grapple.LaunchEndPoint) / grapple.RopeLength);
             var waveUp = (grapple.Rigidbody.rotation * localWaveUp).normalized;
             for (int i = 0; i < ropeRenderer.positionCount; i++)
             {
                 var indexPercent = i / (ropeRenderer.positionCount - 1f);
-                var basePosition = Vector3.Lerp(startPoint, grapple.LaunchEndPoint, indexPercent);
+                var position = Vector3.Lerp(grapple.LaunchStartPoint, grapple.LaunchEndPoint, indexPercent);
 
-                var middleIndexProximity = 1f - Mathf.Abs(i - middleIndex) / middleIndex;
-                var angle = frequency * (indexPercent - speed * Time.time);
-                var waveScale = ropeUsage * middleIndexProximity * amplitude * Mathf.Sin(2f * Mathf.PI * angle);
-                var wavePosition = basePosition + waveScale * waveUp;
+                if (!grapple.IsReeling)
+                {
+                    var middleIndexProximity = 1f - Mathf.Abs(i - middleIndex) / middleIndex;
+                    var angle = frequency * (indexPercent - speed * Time.time);
+                    var waveScale = grapple.RopeUsage * middleIndexProximity * amplitude * Mathf.Sin(2f * Mathf.PI * angle);
+                    position += waveScale * waveUp;
+                }
 
-                ropeRenderer.SetPosition(i, wavePosition);
+                ropeRenderer.SetPosition(i, position);
             }
         }
 

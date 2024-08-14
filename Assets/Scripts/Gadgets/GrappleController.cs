@@ -9,12 +9,13 @@ namespace PilotPursuit.Gadgets
     public class GrappleController : MonoBehaviour
     {
         [SerializeField] private new Rigidbody rigidbody;
-        [SerializeField] private Transform launchCastTransform, reelPointTransform;
+        [SerializeField] private Transform launchCameraPoint, launchStartPoint, reelForcePoint;
         [Header("Launch Settings")]
         [SerializeField][Min(1e-5f)] private float launchSpeed = 50f;
-        [SerializeField][Min(1e-5f)] private float ropeLength = 30f, grappleRange = 5e-2f;
+        [SerializeField][Min(1e-5f)] private float ropeLength = 30f, grappleRange = .05f;
         [Header("Reel Settings")]
-        [SerializeField][Min(1e-5f)] private float reelForce = 200f;
+        [SerializeField][Min(1e-5f)] private float reelForce = 1000f;
+        [SerializeField][Min(0f)] private float reelUpBiasForce = 500f;
         [SerializeField][Min(1e-5f)] private float grappleMass = 10f;
         [Header("Rotation Correction")]
         [SerializeField][Min(1e-5f)] private float rotationCorrectionSpeed = 360f;
@@ -32,16 +33,15 @@ namespace PilotPursuit.Gadgets
         private Vector3 launchEndPoint;
         private bool isHoldingLaunch;
 
-        public Func<Vector3> RotationCorrectionUpDirection { get; set; } = () => Vector3.up;
+        public Func<Vector3> GetUpDirection { get; set; } = () => Vector3.up;
         public Rigidbody Rigidbody => rigidbody;
-        public Transform ReelPointTransform => reelPointTransform;
-        public Transform LaunchCastTransform => launchCastTransform;
+        public Vector3 LaunchStartPoint => launchStartPoint.position;
         public Vector3 LaunchEndPoint => launchEndPoint;
         public float RopeLength => ropeLength;
-        public float GrappleRange => grappleRange;
-        public LayerMask GrappleMask => grappleMask;
+        public float RopeUsage => IsGrappling ? Mathf.Clamp01(Vector3.Distance(launchStartPoint.position, launchEndPoint) / ropeLength) : 0f;
         public bool IsHoldingLaunch => enabled && isHoldingLaunch;
         public bool IsGrappling => grappleRoutine != null;
+        public bool IsReeling { get; private set; }
 
         private void Awake()
         {
@@ -49,13 +49,13 @@ namespace PilotPursuit.Gadgets
             if (logEvents) AddLogToEvents();
         }
 
-        #region Launch
-        public void Launch(InputAction.CallbackContext context)
+        public void Toggle(InputAction.CallbackContext context)
         {
             if (context.performed) Launch();
             else if (context.canceled) Reel();
         }
 
+        #region Launch
         public void Launch()
         {
             if (!enabled) return;
@@ -68,29 +68,31 @@ namespace PilotPursuit.Gadgets
         {
             OnGrapple.Invoke();
 
-            var ropeStartPoint = launchCastTransform.position;
+            var ropeStartPoint = GetLaunchOrigin();
             launchEndPoint = ropeStartPoint;
-            var direction = launchCastTransform.forward;
-            RaycastHit hitInfo = default;
 
+            var hasTarget = HasTarget(out RaycastHit targetInfo);
+            var direction = hasTarget ? (targetInfo.point - ropeStartPoint).normalized : launchCameraPoint.forward;
+
+            RaycastHit hitInfo = default;
             while (IsHoldingLaunch && Vector3.Distance(ropeStartPoint, launchEndPoint) <= ropeLength)
             {
-                var origin = launchEndPoint - grappleRange * direction;
-                var deltaDistance = launchSpeed * Time.fixedDeltaTime;
-                if (Physics.SphereCast(origin, grappleRange, direction, out hitInfo, grappleRange + deltaDistance, grappleMask))
+                if (GrappleWillHit(direction, out hitInfo))
                 {
                     launchEndPoint = hitInfo.point;
                     OnHit.Invoke();
                     break;
                 }
 
-                launchEndPoint += deltaDistance * direction;
+                launchEndPoint += launchSpeed * Time.fixedDeltaTime * direction;
 
                 yield return new WaitForFixedUpdate();
             }
 
+            IsReeling = true;
             yield return StartCoroutine(ReelToRoutine(hitInfo));
             yield return StartCoroutine(ReelInRoutine());
+            IsReeling = false;
 
             launchEndPoint = Vector3.zero;
             grappleRoutine = null;
@@ -113,22 +115,24 @@ namespace PilotPursuit.Gadgets
 
             OnReelTo.Invoke();
 
-            if (disableRotationConstraintsDuringReelTo) rigidbody.constraints &= ~RigidbodyConstraints.FreezeRotation;
+            if (disableRotationConstraintsDuringReelTo) rigidbody.DisableRotationConstrains();
 
             var target = hitInfo.collider.transform;
+            var targetBody = hitInfo.collider.attachedRigidbody;
             var localTargetPoint = target.InverseTransformPoint(hitInfo.point);
             while (IsHoldingLaunch)
             {
                 launchEndPoint = target.TransformPoint(localTargetPoint);
-                var deltaToGrapple = launchEndPoint - rigidbody.position;
-                rigidbody.AddForceAtPosition(reelForce * deltaToGrapple, reelPointTransform.position);
+                var force = reelForce * (launchEndPoint - reelForcePoint.position).normalized + reelUpBiasForce * GetUpDirection();
+                rigidbody.AddForceAtPosition(force, reelForcePoint.position);
+                if (targetBody) targetBody.AddForceAtPosition(-force, launchEndPoint);
 
                 if (disableRotationConstraintsDuringReelTo) ApplyRotationCorrection();
 
                 yield return new WaitForFixedUpdate();
             }
 
-            if (disableRotationConstraintsDuringReelTo) rigidbody.constraints |= RigidbodyConstraints.FreezeRotation;
+            if (disableRotationConstraintsDuringReelTo) rigidbody.EnableRotationConstrains();
         }
 
         private IEnumerator ReelInRoutine()
@@ -136,12 +140,12 @@ namespace PilotPursuit.Gadgets
             OnReelIn.Invoke();
 
             float speed = 0f, acceleration = reelForce / grappleMass * Time.fixedDeltaTime;
-            while (Vector3.Distance(reelPointTransform.position, launchEndPoint) > 0f)
+            while (Vector3.Distance(launchStartPoint.position, launchEndPoint) > 0f)
             {
                 yield return new WaitForFixedUpdate();
 
                 speed += acceleration;
-                launchEndPoint = Vector3.MoveTowards(launchEndPoint, reelPointTransform.position, speed * Time.fixedDeltaTime);
+                launchEndPoint = Vector3.MoveTowards(launchEndPoint, launchStartPoint.position, speed * Time.fixedDeltaTime);
 
                 if (disableRotationConstraintsDuringReelTo) ApplyRotationCorrection();
             }
@@ -155,7 +159,7 @@ namespace PilotPursuit.Gadgets
         #region Rotation Correction
         private void ApplyRotationCorrection()
         {
-            var up = RotationCorrectionUpDirection();
+            var up = GetUpDirection();
             var rigidbodyUp = rigidbody.rotation * up;
             var angleFromUp = Vector3.Angle(rigidbodyUp, up);
             if (angleFromUp == 0f) return;
@@ -168,9 +172,36 @@ namespace PilotPursuit.Gadgets
 
         private Quaternion GetCorrectRotation()
         {
-            var up = RotationCorrectionUpDirection();
+            var up = GetUpDirection();
             var forward = Vector3.ProjectOnPlane(rigidbody.rotation * Vector3.forward, up);
             return Quaternion.LookRotation(forward, up);
+        }
+        #endregion
+
+        #region Physics Checks
+        public bool HasTarget(out RaycastHit targetInfo)
+        {
+            var viewRay = new Ray(GetLaunchOrigin(), launchCameraPoint.forward);
+            var hasTarget = Physics.SphereCast(viewRay, grappleRange, out targetInfo, ropeLength, grappleMask);
+
+            return hasTarget;
+        }
+
+        private Vector3 GetLaunchOrigin()
+        {
+            var cameraDeltaToLaunch = launchStartPoint.position - launchCameraPoint.position;
+            var origin = launchCameraPoint.position + Vector3.Project(cameraDeltaToLaunch, launchCameraPoint.forward);
+
+            return origin;
+        }
+
+        private bool GrappleWillHit(Vector3 travelDirection, out RaycastHit hitInfo)
+        {
+            var origin = launchEndPoint - grappleRange * travelDirection;
+            var deltaDistance = launchSpeed * Time.fixedDeltaTime;
+            var willHit = Physics.SphereCast(origin, grappleRange, travelDirection, out hitInfo, grappleRange + deltaDistance, grappleMask);
+
+            return willHit;
         }
         #endregion
 
@@ -178,8 +209,9 @@ namespace PilotPursuit.Gadgets
         private bool CheckReferences()
         {
             if (rigidbody == null) Debug.LogError($"{nameof(rigidbody)} is not assigned on {name}'s {GetType().Name}");
-            else if (reelPointTransform == null) Debug.LogError($"{nameof(reelPointTransform)} is not assigned on {name}'s {GetType().Name}");
-            else if (launchCastTransform == null) Debug.LogError($"{nameof(launchCastTransform)} is not assigned on {name}'s {GetType().Name}");
+            else if (launchCameraPoint == null) Debug.LogError($"{nameof(launchCameraPoint)} is not assigned on {name}'s {GetType().Name}");
+            else if (launchStartPoint == null) Debug.LogError($"{nameof(launchStartPoint)} is not assigned on {name}'s {GetType().Name}");
+            else if (reelForcePoint == null) Debug.LogError($"{nameof(reelForcePoint)} is not assigned on {name}'s {GetType().Name}");
             else return true;
 
             return false;

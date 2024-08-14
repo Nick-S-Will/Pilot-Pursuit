@@ -44,7 +44,7 @@ namespace PilotPursuit.Gadgets
         }
 
         #region Deployment
-        public void TryToggleDeployed(InputAction.CallbackContext context)
+        public void TryToggle(InputAction.CallbackContext context)
         {
             if (context.performed)
             {

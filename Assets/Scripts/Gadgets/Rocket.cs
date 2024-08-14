@@ -43,7 +43,7 @@ namespace PilotPursuit.Gadgets
             OnExplode.Invoke();
 
             var collidersInRange = Physics.OverlapSphere(rigidbody.position, explosionRadius, explosionMask);
-            var rigidbodiesInRange = collidersInRange.Select(collider => collider.attachedRigidbody).Where(rb => rb != null).Distinct().ToArray();
+            var rigidbodiesInRange = collidersInRange.Select(collider => collider.attachedRigidbody).Where(rb => rb != null && rb != rigidbody).Distinct().ToArray();
             if (explosionDuration == 0f) ApplyExplosionForce(rigidbodiesInRange, ForceMode.Impulse);
             else
             {

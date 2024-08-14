@@ -1,3 +1,4 @@
+using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -8,8 +9,8 @@ namespace PilotPursuit.Gadgets.UI
         [SerializeField] private GrappleController grapple;
         [SerializeField] private Image backgroundImage, fillImage;
         [Header("Visual Settings")]
-        [SerializeField] private Color targetColor = Color.white;
-        [SerializeField] private Color noTargetColor = Color.black, fillColor = Color.gray;
+        [SerializeField] private Color targetColor = Color.green;
+        [SerializeField] private Color noTargetColor = Color.black, grapplingColor = Color.red, fillColor = Color.blue;
         [SerializeField][Range(0f, 1f)] private float maxFill = 1f;
 
         private void Awake()
@@ -30,31 +31,37 @@ namespace PilotPursuit.Gadgets.UI
 
         private void Update()
         {
-            var isVisible = grapple.enabled && !grapple.IsGrappling;
+            var isVisible = grapple.enabled;
             backgroundImage.enabled = isVisible;
             fillImage.enabled = isVisible;
-
             if (!isVisible) return;
 
-            var launchRay = new Ray(grapple.LaunchCastTransform.position, grapple.LaunchCastTransform.forward);
-            var hasTarget = Physics.SphereCast(launchRay, grapple.GrappleRange, out RaycastHit targetInfo, grapple.RopeLength, grapple.GrappleMask);
+            if (grapple.IsGrappling)
+            {
+                backgroundImage.color = grapplingColor;
+                fillImage.fillAmount = GetFillAmount(grapple.RopeUsage);
+            }
+            else
+            {
+                var hasTarget = grapple.HasTarget(out RaycastHit targetInfo);
+                backgroundImage.color = hasTarget ? targetColor : noTargetColor;
+                fillImage.enabled = hasTarget;
+                if (!hasTarget) return;
 
-            backgroundImage.color = hasTarget ? targetColor : noTargetColor;
-            fillImage.enabled = hasTarget;
-
-            if (!hasTarget) return;
-
-            var fillAmount = Mathf.Lerp(0f, maxFill, targetInfo.distance / grapple.RopeLength);
-            fillImage.fillAmount = fillAmount;
+                var fillAmount = GetFillAmount(targetInfo.distance / grapple.RopeLength);
+                fillImage.fillAmount = fillAmount;
+            }
         }
 
+        private float GetFillAmount(float percent) => Mathf.Lerp(0f, maxFill, percent);
+
+        #region Debug
         private void OnValidate()
         {
             if (backgroundImage) backgroundImage.color = targetColor;
             if (fillImage) fillImage.color = fillColor;
         }
 
-        #region Debug
         private bool CheckReferences()
         {
             if (grapple == null) Debug.LogError($"{nameof(grapple)} is not assigned on {name}'s {GetType().Name}");
