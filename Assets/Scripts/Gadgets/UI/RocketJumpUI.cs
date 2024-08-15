@@ -1,3 +1,4 @@
+using System.Linq;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -70,6 +71,7 @@ namespace PilotPursuit.Gadgets.UI
             if (rocketJump == null) Debug.LogError($"{nameof(rocketJump)} is not assigned on {name}'s {GetType().Name}");
             else if (fillImage == null) Debug.LogError($"{nameof(fillImage)} is not assigned on {name}'s {GetType().Name}");
             else if (rocketCountText == null) Debug.LogError($"{nameof(rocketCountText)} is not assigned on {name}'s {GetType().Name}");
+            else if (otherVisuals.Any(point => point == null)) Debug.LogError($"{nameof(otherVisuals)} contains a null reference on {name}'s {GetType().Name}");
             else return true;
 
             return false;

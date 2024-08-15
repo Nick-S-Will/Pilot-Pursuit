@@ -1,4 +1,5 @@
 using PilotPursuit.Movement;
+using System.Linq;
 using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.InputSystem;
@@ -127,6 +128,7 @@ namespace PilotPursuit.Gadgets
             if (jumpController == null) Debug.LogError($"{nameof(jumpController)} is not assigned on {name}'s {GetType().Name}");
             else if (rocketPrefab == null) Debug.LogError($"{nameof(rocketPrefab)} is not assigned on {name}'s {GetType().Name}");
             else if (launchPoints.Length == 0) Debug.LogError($"{nameof(launchPoints)} is empty on {name}'s {GetType().Name}");
+            else if (launchPoints.Any(point => point == null)) Debug.LogError($"{nameof(launchPoints)} contains a null reference on {name}'s {GetType().Name}");
             else return true;
 
             return false;

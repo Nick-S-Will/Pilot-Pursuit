@@ -9,8 +9,8 @@ namespace PilotPursuit.Movement
     {
         [SerializeField] private new Rigidbody rigidbody;
         [Header("Run Settings")]
-        [SerializeField] private Vector3 groundMoveForce = 1000 * Vector3.one;
-        [SerializeField] private Vector3 airMoveForce = 100 * Vector3.one;
+        [SerializeField] private Vector3 groundMoveForce = 1000f * Vector3.one;
+        [SerializeField] private Vector3 airMoveForce = 100f * Vector3.one;
         [Header("Physics Checks")]
         [SerializeField] private LayerMask groundMask;
         [Tooltip("Set to 0 to disable ground check (always on ground).")]

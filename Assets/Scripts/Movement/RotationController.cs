@@ -9,7 +9,7 @@ namespace PilotPursuit.Movement
         [SerializeField] private Transform cameraTransform;
         [Header("Rotation Settings")]
         [SerializeField] private Vector2 rotationSensitivity = Vector2.one;
-        [SerializeField][Range(0f, 180f)] private float maxPitchRotation = 70f;
+        [SerializeField][Range(-180f, 180f)] private float minPitchRotation = -50f, maxPitchRotation = 60f;
 
         private Vector2 rotationInputSinceUpdate;
 
@@ -24,7 +24,7 @@ namespace PilotPursuit.Movement
             }
             private set
             {
-                var clampedPitch = Mathf.Clamp(value, -maxPitchRotation, maxPitchRotation);
+                var clampedPitch = Mathf.Clamp(value, minPitchRotation, maxPitchRotation);
 
                 var localEuler = cameraTransform.localEulerAngles;
                 localEuler.x = clampedPitch;
