@@ -1,46 +1,30 @@
+using PilotPursuit.Movement;
 using System;
 using System.Collections;
-using System.Linq;
 using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.InputSystem;
 
 namespace PilotPursuit.Gadgets
 {
-    public class WingSuitController : MonoBehaviour
+    public class WingsuitController : MonoBehaviour
     {
-        [SerializeField] private new Rigidbody rigidbody;
-        [SerializeField] private new Collider collider;
-        [SerializeField] private Transform cameraPoint;
-        [Tooltip("Points to consider when applying lift force")]
-        [SerializeField] private Transform[] liftPoints;
-        [Header("Flight Settings")]
-        [SerializeField][Min(0f)] private float liftForce = 500f;
-        [SerializeField][Min(0f)] private float liftPointDirectionWeight = 1f;
+        [SerializeField] private Skydiver skydiver;
+        [Header("Lift Settings")]
+        [SerializeField][Min(0f)] private float addedLiftForce = 200f;
+        [Header("Tilt Settings")]
         [SerializeField] private Vector2 tiltTorque = 100f * Vector2.one;
-        [SerializeField][Range(0f, 1f)] private float tiltInputDeadZone = .1f;
-        [Header("Rotation Settings")]
-        [Tooltip("Determines how much to bias the base flight rotation towards the camera forward")]
-        [SerializeField][Range(1e-5f, 1f)] private float cameraDirectionBias = .01f;
-        [SerializeField][Min(1e-5f)] private float rotationSpeed = 180f;
-        [Header("Physics Checks")]
-        [SerializeField] private LayerMask groundMask;
-        [SerializeField][Min(0f)] private float angleTolerance = 1f;
+        [SerializeField][Range(0f, 90f)] private float maxRoll = 45f, maxPitch = 75f;
         [Header("Events")]
         public UnityEvent OnDeploy;
-        public UnityEvent OnRetract, OnRetracted;
+        public UnityEvent OnRetract;
         [Header("Debug")]
-        [SerializeField] private Color gizmoColor = Color.white;
-        [SerializeField] private Color liftPointColor = Color.green;
-        [SerializeField][Min(1e-5f)] private float gizmoRadius = .2f;
-        [SerializeField] private bool showLiftPoints, logEvents;
+        [SerializeField] private bool logEvents;
 
-        private Coroutine flightRoutine;
+        private Coroutine tiltRoutine;
         private Vector2 tiltInput;
 
-        public Func<Vector3> GetUpDirection { get; set; } = () => Vector3.up;
-        public Rigidbody Rigidbody => rigidbody;
-        public bool IsFlying => flightRoutine != null;
+        public Rigidbody Rigidbody => skydiver.Rigidbody;
         public bool IsDeployed { get; private set; }
 
         private void Awake()
@@ -53,7 +37,7 @@ namespace PilotPursuit.Gadgets
 
         private void FixedUpdate()
         {
-            if (IsDeployed && IsNearGround()) Retract();
+            skydiver.AddedLiftForce = IsDeployed ? addedLiftForce : 0f;
         }
 
         #region Deployment
@@ -68,23 +52,27 @@ namespace PilotPursuit.Gadgets
 
         public void TryDeploy()
         {
-            if (!enabled || IsDeployed || IsNearGround()) return;
+            if (!enabled || !skydiver.IsHorizontal || IsDeployed) return;
 
             IsDeployed = true;
-            if (IsFlying) StopCoroutine(flightRoutine);
-            flightRoutine = StartCoroutine(FlightRoutine());
+            if (tiltRoutine != null) StopCoroutine(tiltRoutine);
+            tiltRoutine = StartCoroutine(TiltRoutine());
+
+            OnDeploy.Invoke();
         }
 
         public void Retract()
         {
             if (!enabled) return;
 
-            if (!IsDeployed) Debug.LogWarning($"{nameof(WingSuitController)}'s {nameof(IsDeployed)} must be true before {nameof(Retract)}ing");
+            if (!IsDeployed) Debug.LogWarning($"{nameof(WingsuitController)}'s {nameof(IsDeployed)} must be true before {nameof(Retract)}ing");
             IsDeployed = false;
+
+            OnRetract.Invoke();
         }
         #endregion
 
-        #region Flight
+        #region Tilt
         public void Tilt(InputAction.CallbackContext context)
         {
             if (!enabled) return;
@@ -92,127 +80,45 @@ namespace PilotPursuit.Gadgets
             tiltInput = context.ReadValue<Vector2>();
         }
 
-        private IEnumerator FlightRoutine()
+        private IEnumerator TiltRoutine()
         {
-            OnDeploy.Invoke();
-            rigidbody.DisableRotationConstrains();
-            yield return StartCoroutine(RotateRoutine());
+            Rigidbody.DisableRotationConstrains();
 
-            while (enabled && IsDeployed)
+            while (enabled && skydiver.IsHorizontal && IsDeployed)
             {
-                var rigidbodyBack = rigidbody.rotation * Vector3.back;
-                var lift = Vector3.Project(-rigidbody.velocity, rigidbodyBack);
-                rigidbody.AddForceAtPosition(liftForce * lift, GetLiftPoint());
-
-                if (tiltInput.magnitude > tiltInputDeadZone)
-                {
-                    var yawTorque = tiltInput.x * tiltTorque.x * Vector3.back;
-                    var pitchTorque = tiltInput.y * tiltTorque.y * Vector3.right;
-                    var torque = yawTorque + pitchTorque;
-                    rigidbody.AddRelativeTorque(torque);
-                }
+                ApplyTilt(Vector3.right, maxRoll, 0, Vector3.down);
+                ApplyTilt(Vector3.up, maxPitch, 1, Vector3.right);
 
                 yield return new WaitForFixedUpdate();
             }
 
-            OnRetract.Invoke();
-            yield return StartCoroutine(RotateRoutine(true));
-            rigidbody.EnableRotationConstrains();
-            OnRetracted.Invoke();
+            Rigidbody.EnableRotationConstrains();
 
-            flightRoutine = null;
+            tiltRoutine = null;
         }
 
-        private Vector3 GetLiftPoint()
+        private void ApplyTilt(Vector3 localSlopeAxis, float maxTilt, int inputIndex, Vector3 localTorqueAxis)
         {
-            var positions = liftPoints.Select(t => t.position);
-            var averagePosition = positions.Average();
-            var directions = positions.Select(pos => (pos - averagePosition).normalized).ToArray();
-
-            var downDirection = -GetUpDirection();
-            var weights = directions.Select(direction => liftPointDirectionWeight * Vector3.Dot(direction, downDirection)).ToArray();
-
-            var weightedAverageDirection = Vector3.zero;
-            for (int i = 0; i < directions.Length; i++) weightedAverageDirection += weights[i] * directions[i];
-            weightedAverageDirection /= directions.Length;
-
-            return averagePosition + weightedAverageDirection;
-        }
-        #endregion
-
-        #region Rotation
-        private IEnumerator RotateRoutine(bool alwaysComplete = false)
-        {
-            while (alwaysComplete || enabled && IsDeployed)
+            var slopeAxis = Rigidbody.rotation * localSlopeAxis;
+            var tiltMagnitude = Mathf.Abs(Vector3.Angle(slopeAxis, skydiver.UpDirection) - 90f);
+            if (tiltMagnitude <= maxTilt)
             {
-                var targetRotation = GetTargetRotation(IsDeployed);
-                var rotation = Quaternion.RotateTowards(rigidbody.rotation, targetRotation, rotationSpeed * Time.fixedDeltaTime);
-                rigidbody.MoveRotation(rotation);
-
-                if (Quaternion.Angle(rotation, targetRotation) <= angleTolerance) break;
-
-                yield return new WaitForFixedUpdate();
+                var torque = tiltInput[inputIndex] * tiltTorque[inputIndex] * localTorqueAxis;
+                Rigidbody.AddRelativeTorque(torque);
             }
-
-            if (alwaysComplete || enabled && IsDeployed)
+            else
             {
-                rigidbody.MoveRotation(GetTargetRotation(IsDeployed));
+                var tiltTorqueDirection = Rigidbody.rotation * localTorqueAxis;
+                var tiltTorque = Vector3.Project(Rigidbody.angularVelocity, tiltTorqueDirection);
+                Rigidbody.AddTorque(-tiltTorque, ForceMode.VelocityChange);
             }
-        }
-
-        private Quaternion GetTargetRotation(bool isDeployed)
-        {
-            var camForward = Vector3.ProjectOnPlane(cameraPoint.forward, GetUpDirection()).normalized;
-            var forward = isDeployed ? Vector3.Lerp(-GetUpDirection(), camForward, cameraDirectionBias) : camForward;
-            return Quaternion.LookRotation(forward, GetUpDirection());
-        }
-        #endregion
-
-        #region Physics Checks
-        private bool IsNearGround()
-        {
-            var bounds = collider.bounds;
-            var maxDistance = GetMinGroundDistance();
-            var isNearGround = Physics.BoxCast(bounds.center, bounds.size / 2f, -GetUpDirection(), Quaternion.identity, maxDistance, groundMask);
-
-            return isNearGround;
-        }
-
-        private float GetMinGroundDistance()
-        {
-            var angleToStraighten = Quaternion.Angle(rigidbody.rotation, GetTargetRotation(false));
-            var timeToStraighten = angleToStraighten / rotationSpeed;
-            return (timeToStraighten * Vector3.Project(rigidbody.velocity, GetUpDirection())).magnitude;
         }
         #endregion
 
         #region Debug
-        private void OnDrawGizmos()
-        {
-            if (showLiftPoints)
-            {
-                Gizmos.color = gizmoColor;
-                for (int i = 0; i < liftPoints.Length; i++)
-                {
-                    var point = liftPoints[i];
-                    if (point == null) continue;
-
-                    Gizmos.DrawWireSphere(point.position, gizmoRadius);
-                    Gizmos.DrawLine(point.position, liftPoints[(i + 1) % liftPoints.Length].position);
-                }
-
-                Gizmos.color = liftPointColor;
-                Gizmos.DrawWireSphere(GetLiftPoint(), gizmoRadius);
-            }
-        }
-
         private bool CheckReferences()
         {
-            if (rigidbody == null) Debug.LogError($"{nameof(rigidbody)} is not assigned on {name}'s {GetType().Name}");
-            else if (collider == null) Debug.LogError($"{nameof(collider)} is not assigned on {name}'s {GetType().Name}");
-            else if (cameraPoint == null) Debug.LogError($"{nameof(cameraPoint)} is not assigned on {name}'s {GetType().Name}");
-            else if (liftPoints.Length < 4) Debug.LogError($"{nameof(liftPoints)} must have at least 4 elements on {name}'s {GetType().Name}");
-            else if (liftPoints.Any(point => point == null)) Debug.LogError($"{nameof(liftPoints)} contains a null reference on {name}'s {GetType().Name}");
+            if (skydiver == null) Debug.LogError($"{nameof(skydiver)} is not assigned on {name}'s {GetType().Name}");
             else return true;
 
             return false;
@@ -222,7 +128,6 @@ namespace PilotPursuit.Gadgets
         {
             OnDeploy.AddListener(() => Debug.Log(GetType().Name + ": " + nameof(OnDeploy)));
             OnRetract.AddListener(() => Debug.Log(GetType().Name + ": " + nameof(OnRetract)));
-            OnRetracted.AddListener(() => Debug.Log(GetType().Name + ": " + nameof(OnRetracted)));
         }
         #endregion
     }

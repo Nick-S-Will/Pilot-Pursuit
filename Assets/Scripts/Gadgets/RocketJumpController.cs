@@ -17,7 +17,7 @@ namespace PilotPursuit.Gadgets
         [SerializeField][Min(1f)] private int clipSize = 3;
         [SerializeField] private bool mustBeInAir = true;
         [Header("Physics Checks")]
-        [SerializeField] private LayerMask obstacleMask;
+        [SerializeField] private LayerMask obstacleMask = 1;
         [Tooltip("Set to (0, 0, 0) to disable obstacle check.")]
         [SerializeField] private Vector3 obstacleCheckExtents = .5f * Vector3.one;
         [Header("Events")]

@@ -13,7 +13,7 @@ namespace PilotPursuit.Gadgets
         [SerializeField][Min(0f)] private float explosionForce = 5000f;
         [SerializeField][Min(0f)] private float explosionRadius = 2f, upwardsModifier = 1f, explosionDuration = .1f;
         [Header("Physics Checks")]
-        [SerializeField] private LayerMask explosionMask;
+        [SerializeField] private LayerMask explosionMask = 1;
         [Header("Events")]
         public UnityEvent OnExplode;
         [Header("Debug")]

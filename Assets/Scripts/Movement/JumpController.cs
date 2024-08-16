@@ -12,7 +12,7 @@ namespace PilotPursuit.Movement
         [SerializeField][Min(0f)] private float chargeTime = .4f;
         [SerializeField][Min(0f)] private float jumpTime = .15f, jumpForce = 3000f, jumpBufferTime = .1f, coyoteTime = .1f;
         [Header("Physics Checks")]
-        [SerializeField] private LayerMask groundMask;
+        [SerializeField] private LayerMask groundMask = 1;
         [Tooltip("Set to 0 to disable ground check (always on ground).")]
         [SerializeField][Min(0f)] private float maxGroundDistance = .1f;
         /// <summary>

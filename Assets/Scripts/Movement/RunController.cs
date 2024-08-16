@@ -12,7 +12,7 @@ namespace PilotPursuit.Movement
         [SerializeField] private Vector3 groundMoveForce = 1000f * Vector3.one;
         [SerializeField] private Vector3 airMoveForce = 100f * Vector3.one;
         [Header("Physics Checks")]
-        [SerializeField] private LayerMask groundMask;
+        [SerializeField] private LayerMask groundMask = 1;
         [Tooltip("Set to 0 to disable ground check (always on ground).")]
         [SerializeField][Min(0f)] private float maxGroundDistance = .1f;
         [SerializeField][Range(0f, 180f)] private float maxInclineAngle = 40f;
@@ -27,6 +27,7 @@ namespace PilotPursuit.Movement
         private float lastProjectedSpeed;
 
         public Func<Vector3> GetUpDirection { get; set; } = () => Vector3.up;
+        public Vector3 UpDirection => GetUpDirection();
         public Rigidbody Rigidbody => rigidbody;
         public bool IsOnGround { get; private set; }
 
@@ -78,7 +79,7 @@ namespace PilotPursuit.Movement
         private bool IsFlatEnough()
         {
             var rigidBodyUp = rigidbody.rotation * Vector3.up;
-            var angle = Vector3.Angle(GetUpDirection(), rigidBodyUp);
+            var angle = Vector3.Angle(UpDirection, rigidBodyUp);
 
             return angle <= maxInclineAngle;
         }

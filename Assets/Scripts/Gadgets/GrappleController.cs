@@ -22,7 +22,7 @@ namespace PilotPursuit.Gadgets
         [SerializeField][Range(0f, 1f)] private float minRotationCorrection = 0.75f;
         [SerializeField] private bool disableRotationConstraintsDuringReelTo = true;
         [Header("Physics Checks")]
-        [SerializeField] private LayerMask grappleMask;
+        [SerializeField] private LayerMask grappleMask = 1;
         [Header("Events")]
         public UnityEvent OnGrapple;
         public UnityEvent OnGrappleReleased, OnHit, OnReelTo, OnReelIn, OnReelInComplete;
@@ -34,6 +34,7 @@ namespace PilotPursuit.Gadgets
         private bool isHoldingLaunch;
 
         public Func<Vector3> GetUpDirection { get; set; } = () => Vector3.up;
+        public Vector3 UpDirection => GetUpDirection();
         public Rigidbody Rigidbody => rigidbody;
         public Vector3 LaunchStartPoint => launchStartPoint.position;
         public Vector3 LaunchEndPoint => launchEndPoint;
@@ -123,7 +124,7 @@ namespace PilotPursuit.Gadgets
             while (IsHoldingLaunch)
             {
                 launchEndPoint = target.TransformPoint(localTargetPoint);
-                var force = reelForce * (launchEndPoint - reelForcePoint.position).normalized + reelUpBiasForce * GetUpDirection();
+                var force = reelForce * (launchEndPoint - reelForcePoint.position).normalized + reelUpBiasForce * UpDirection;
                 rigidbody.AddForceAtPosition(force, reelForcePoint.position);
                 if (targetBody) targetBody.AddForceAtPosition(-force, launchEndPoint);
 
@@ -159,7 +160,7 @@ namespace PilotPursuit.Gadgets
         #region Rotation Correction
         private void ApplyRotationCorrection()
         {
-            var up = GetUpDirection();
+            var up = UpDirection;
             var rigidbodyUp = rigidbody.rotation * up;
             var angleFromUp = Vector3.Angle(rigidbodyUp, up);
             if (angleFromUp == 0f) return;
@@ -172,7 +173,7 @@ namespace PilotPursuit.Gadgets
 
         private Quaternion GetCorrectRotation()
         {
-            var up = GetUpDirection();
+            var up = UpDirection;
             var forward = Vector3.ProjectOnPlane(rigidbody.rotation * Vector3.forward, up);
             return Quaternion.LookRotation(forward, up);
         }

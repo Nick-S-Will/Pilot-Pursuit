@@ -420,7 +420,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_BindingMode: 5
-  m_FollowOffset: {x: 0, y: 2.568441, z: -2.694726}
+  m_FollowOffset: {x: 0, y: 3.758184, z: -1.089638}
   m_XDamping: 1
   m_YDamping: 1
   m_ZDamping: 1
@@ -810,7 +810,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_BindingMode: 5
-  m_FollowOffset: {x: 0, y: 2.568441, z: -2.694726}
+  m_FollowOffset: {x: 0, y: 3.758184, z: -1.089638}
   m_XDamping: 1
   m_YDamping: 1
   m_ZDamping: 1
@@ -2181,7 +2181,7 @@ Transform:
   m_GameObject: {fileID: 705507993}
   serializedVersion: 2
   m_LocalRotation: {x: 0.35355338, y: 0.35355338, z: -0.1464466, w: 0.8535535}
-  m_LocalPosition: {x: 0, y: 3, z: 0}
+  m_LocalPosition: {x: 0, y: 5, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -2336,8 +2336,8 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 935210922}
   serializedVersion: 2
-  m_LocalRotation: {x: 0.092122994, y: 0.9074578, z: -0.30397204, w: 0.2750178}
-  m_LocalPosition: {x: -1.722319, y: -2.4315605, z: 6.234947}
+  m_LocalRotation: {x: 0.5516136, y: -0.07246085, z: 0.048183333, w: 0.8295482}
+  m_LocalPosition: {x: -0.50458914, y: 3.7581825, z: 2.8662863}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -2542,8 +2542,8 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1011434356}
   serializedVersion: 2
-  m_LocalRotation: {x: -0.09510414, y: 0.90228343, z: -0.3312711, w: -0.25903526}
-  m_LocalPosition: {x: 1.2030665, y: -2.4315605, z: 6.2779408}
+  m_LocalRotation: {x: 0.57514644, y: -0.07105115, z: 0.050238937, w: 0.81340915}
+  m_LocalPosition: {x: -0.50458914, y: 3.7581825, z: 2.8662863}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -2837,8 +2837,8 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1292749980}
   serializedVersion: 2
-  m_LocalRotation: {x: -0.102534145, y: 0.8923565, z: -0.35714734, w: -0.25618836}
-  m_LocalPosition: {x: 1.2030809, y: -2.4315605, z: 6.277932}
+  m_LocalRotation: {x: 0.5983591, y: -0.069573246, z: 0.052266642, w: 0.79648864}
+  m_LocalPosition: {x: -0.50458896, y: 3.7581825, z: 2.8662863}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -2919,7 +2919,7 @@ Transform:
   m_GameObject: {fileID: 1453860951}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0.22636984, y: 55.9, z: 6.0064106}
+  m_LocalPosition: {x: 0.6935072, y: 50.9, z: 6.0605774}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -3452,7 +3452,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_BindingMode: 5
-  m_FollowOffset: {x: 0, y: 2.568441, z: -2.694726}
+  m_FollowOffset: {x: 0, y: 3.758184, z: -1.089638}
   m_XDamping: 1
   m_YDamping: 1
   m_ZDamping: 1
@@ -3759,6 +3759,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1779784609}
+  - component: {fileID: 1779784610}
   - component: {fileID: 1779784608}
   m_Layer: 3
   m_Name: Wingsuit
@@ -3779,86 +3780,17 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ce784442303b23e4981fbda945b92901, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  rigidbody: {fileID: 604522412}
-  collider: {fileID: 604522408}
-  cameraPoint: {fileID: 1910919493}
-  liftPoints:
-  - {fileID: 1704232694}
-  - {fileID: 1601551569}
-  - {fileID: 635256400}
-  - {fileID: 1103363334}
-  liftForce: 700
-  liftPointDirectionWeight: 0.2
-  tiltTorque: {x: 25, y: 100}
-  tiltInputDeadZone: 0.1
-  disableRotationConstraintsDuringFlight: 1
-  cameraDirectionBias: 0.01
-  rotationSpeed: 180
-  groundMask:
-    serializedVersion: 2
-    m_Bits: 1
-  angleTolerance: 1
+  skydiver: {fileID: 1779784610}
+  addedLiftForce: 200
+  tiltTorque: {x: 50, y: 150}
+  maxRoll: 45
+  maxPitch: 50
   OnDeploy:
     m_PersistentCalls:
-      m_Calls:
-      - m_Target: {fileID: 604522416}
-        m_TargetAssemblyTypeName: UnityEngine.Behaviour, UnityEngine
-        m_MethodName: set_enabled
-        m_Mode: 6
-        m_Arguments:
-          m_ObjectArgument: {fileID: 0}
-          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
-          m_IntArgument: 0
-          m_FloatArgument: 0
-          m_StringArgument: 
-          m_BoolArgument: 0
-        m_CallState: 2
-      - m_Target: {fileID: 1453860955}
-        m_TargetAssemblyTypeName: UnityEngine.Behaviour, UnityEngine
-        m_MethodName: set_enabled
-        m_Mode: 6
-        m_Arguments:
-          m_ObjectArgument: {fileID: 0}
-          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
-          m_IntArgument: 0
-          m_FloatArgument: 0
-          m_StringArgument: 
-          m_BoolArgument: 1
-        m_CallState: 2
+      m_Calls: []
   OnRetract:
     m_PersistentCalls:
-      m_Calls:
-      - m_Target: {fileID: 604522416}
-        m_TargetAssemblyTypeName: UnityEngine.Behaviour, UnityEngine
-        m_MethodName: set_enabled
-        m_Mode: 6
-        m_Arguments:
-          m_ObjectArgument: {fileID: 0}
-          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
-          m_IntArgument: 0
-          m_FloatArgument: 0
-          m_StringArgument: 
-          m_BoolArgument: 1
-        m_CallState: 2
-      - m_Target: {fileID: 1453860955}
-        m_TargetAssemblyTypeName: UnityEngine.Behaviour, UnityEngine
-        m_MethodName: set_enabled
-        m_Mode: 6
-        m_Arguments:
-          m_ObjectArgument: {fileID: 0}
-          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
-          m_IntArgument: 0
-          m_FloatArgument: 0
-          m_StringArgument: 
-          m_BoolArgument: 0
-        m_CallState: 2
-  OnRetracted:
-    m_PersistentCalls:
       m_Calls: []
-  gizmoColor: {r: 1, g: 1, b: 1, a: 1}
-  liftPointColor: {r: 0, g: 1, b: 0, a: 1}
-  gizmoRadius: 0.1
-  showLiftPoints: 0
   logEvents: 0
 --- !u!4 &1779784609
 Transform:
@@ -3879,6 +3811,72 @@ Transform:
   - {fileID: 1103363334}
   m_Father: {fileID: 604522411}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1779784610
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1779784607}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 640d628f7ec4a5946b93d912f3829894, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  rotationController: {fileID: 604522416}
+  rigidbody: {fileID: 604522412}
+  collider: {fileID: 604522408}
+  bodyForwardPoint: {fileID: 963194228}
+  liftPoints:
+  - {fileID: 1704232694}
+  - {fileID: 1601551569}
+  - {fileID: 635256400}
+  - {fileID: 1103363334}
+  baseLiftForce: 50.2
+  liftPointDirectionWeight: 0.2
+  cameraDirectionBias: 0.01
+  rotationSpeed: 180
+  groundMask:
+    serializedVersion: 2
+    m_Bits: 1
+  boundExtentScale: 0.95
+  minGroundDistanceToRotate: 5
+  angleTolerance: 1
+  OnRotateHorizontal:
+    m_PersistentCalls:
+      m_Calls:
+      - m_Target: {fileID: 1453860955}
+        m_TargetAssemblyTypeName: UnityEngine.Behaviour, UnityEngine
+        m_MethodName: set_enabled
+        m_Mode: 6
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 1
+        m_CallState: 2
+  OnRotateVertical:
+    m_PersistentCalls:
+      m_Calls:
+      - m_Target: {fileID: 1453860955}
+        m_TargetAssemblyTypeName: UnityEngine.Behaviour, UnityEngine
+        m_MethodName: set_enabled
+        m_Mode: 6
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
+  gizmoColor: {r: 1, g: 1, b: 1, a: 1}
+  liftPointColor: {r: 0, g: 1, b: 0, a: 1}
+  gizmoRadius: 0.2
+  showLiftPoints: 0
+  logEvents: 0
 --- !u!1 &1832453297
 GameObject:
   m_ObjectHideFlags: 0
