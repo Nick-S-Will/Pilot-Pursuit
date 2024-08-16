@@ -15,6 +15,7 @@ namespace PilotPursuit.Gadgets
         [Header("Tilt Settings")]
         [SerializeField] private Vector2 tiltTorque = 100f * Vector2.one;
         [SerializeField][Range(0f, 90f)] private float maxRoll = 45f, maxPitch = 75f;
+        [SerializeField][Min(0f)] private float headingAdjustSpeed = 10f, headingAdjustSpeedThreshold = 1f, headingAngleTolerance = 5f;
         [Header("Events")]
         public UnityEvent OnDeploy;
         public UnityEvent OnRetract;
@@ -89,6 +90,8 @@ namespace PilotPursuit.Gadgets
                 ApplyTilt(Vector3.right, maxRoll, 0, Vector3.down);
                 ApplyTilt(Vector3.up, maxPitch, 1, Vector3.right);
 
+                AdjustHeading();
+
                 yield return new WaitForFixedUpdate();
             }
 
@@ -112,6 +115,21 @@ namespace PilotPursuit.Gadgets
                 var tiltTorque = Vector3.Project(Rigidbody.angularVelocity, tiltTorqueDirection);
                 Rigidbody.AddTorque(-tiltTorque, ForceMode.VelocityChange);
             }
+        }
+
+        private void AdjustHeading()
+        {
+            if (headingAdjustSpeed == 0f) return;
+
+            var up = skydiver.UpDirection;
+            var upPlaneVelocity = Vector3.ProjectOnPlane(Rigidbody.velocity, up);
+            if (upPlaneVelocity.magnitude <= headingAdjustSpeedThreshold) return;
+
+            var upPlaneRigidbodyUp = Vector3.ProjectOnPlane(Rigidbody.rotation * Vector3.up, up);
+            if (Vector3.Angle(upPlaneRigidbodyUp, upPlaneVelocity) <= headingAngleTolerance) return;
+
+            var torque = headingAdjustSpeed * Vector3.Cross(upPlaneRigidbodyUp, upPlaneVelocity);
+            Rigidbody.AddTorque(torque);
         }
         #endregion
 

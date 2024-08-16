@@ -16,16 +16,15 @@ namespace PilotPursuit.Movement
         [Tooltip("Points to consider when applying lift force. Leave empty for lift to ignore torque")]
         [SerializeField] private Transform[] liftPoints;
         [Header("Rotation Settings")]
-        [Tooltip("Determines how much to bias the base flight rotation towards the camera forward")]
-        [SerializeField][Range(1e-5f, 1f)] private float cameraDirectionBias = .01f;
         [SerializeField][Min(1e-5f)] private float rotationSpeed = 180f;
+        [SerializeField][Min(0f)] private float rotationAngleTolerance = 1f;
         [Header("Lift Settings")]
         [SerializeField][Min(0f)] private float baseLiftForce = 50f;
         [SerializeField][Min(0f)] private float liftPointDirectionWeight = 1f;
         [Header("Physics Checks")]
         [SerializeField] private LayerMask groundMask = 1;
         [SerializeField][Range(0f, 1f)] private float boundExtentScale = .95f;
-        [SerializeField][Min(0f)] private float minGroundDistanceToRotate = 1f, angleTolerance = 1f;
+        [SerializeField][Min(0f)] private float minGroundDistanceToRotate = 1f;
         [Header("Events")]
         public UnityEvent OnRotateHorizontal;
         public UnityEvent OnRotateVertical;
@@ -43,6 +42,7 @@ namespace PilotPursuit.Movement
         public float TotalLiftForce => baseLiftForce + AddedLiftForce;
         public float AddedLiftForce { get; set; }
         public bool IsHorizontal { get; private set; }
+        public bool IsRotating => rotationRoutine != null;
 
         private void Awake()
         {
@@ -66,7 +66,7 @@ namespace PilotPursuit.Movement
             if (IsHorizontal == horizontal) return;
 
             IsHorizontal = horizontal;
-            if (rotationRoutine != null) StopCoroutine(rotationRoutine);
+            if (IsRotating) StopCoroutine(rotationRoutine);
             rotationRoutine = StartCoroutine(RotateRoutine(alwaysComplete));
 
             if (rotationController) rotationController.enabled = !IsHorizontal;
@@ -82,7 +82,7 @@ namespace PilotPursuit.Movement
                 var rotation = Quaternion.RotateTowards(rigidbody.rotation, targetRotation, rotationSpeed * Time.fixedDeltaTime);
                 rigidbody.MoveRotation(rotation);
 
-                if (Quaternion.Angle(rotation, targetRotation) <= angleTolerance) break;
+                if (Quaternion.Angle(rotation, targetRotation) <= rotationAngleTolerance) break;
 
                 yield return new WaitForFixedUpdate();
             }
@@ -97,9 +97,11 @@ namespace PilotPursuit.Movement
 
         private Quaternion GetTargetRotation(bool horizontal)
         {
-            var camForward = Vector3.ProjectOnPlane(bodyForwardPoint.forward, UpDirection).normalized;
-            var forward = horizontal ? Vector3.Lerp(-UpDirection, camForward, cameraDirectionBias) : camForward;
-            return Quaternion.LookRotation(forward, UpDirection);
+            var up = UpDirection;
+            var camForward = Vector3.ProjectOnPlane(bodyForwardPoint.forward, up).normalized;
+            var forward = horizontal ? -up : camForward;
+            var upwards = horizontal ? camForward : up;
+            return Quaternion.LookRotation(forward, upwards);
         }
         #endregion
 
