@@ -47,7 +47,7 @@ namespace PilotPursuit.Movement
         }
 
         #region Run
-        public void Run(InputAction.CallbackContext context) => moveInput = context.ReadValue<Vector2>();
+        public void Run(InputAction.CallbackContext context) => Run(context.ReadValue<Vector2>());
 
         public void Run(Vector2 input) => moveInput = input;
 

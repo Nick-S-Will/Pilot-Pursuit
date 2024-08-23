@@ -36,6 +36,14 @@ namespace PilotPursuit.Gadgets
             Cursor.lockState = CursorLockMode.Confined;
         }
 
+        private void OnDisable()
+        {
+            if (!IsDeployed) return;
+
+            IsDeployed = false;
+            OnRetract.Invoke();
+        }
+
         private void FixedUpdate()
         {
             skydiver.AddedLiftForce = IsDeployed ? addedLiftForce : 0f;
@@ -44,11 +52,10 @@ namespace PilotPursuit.Gadgets
         #region Deployment
         public void TryToggle(InputAction.CallbackContext context)
         {
-            if (context.performed)
-            {
-                if (IsDeployed) Retract();
-                else TryDeploy();
-            }
+            if (!context.performed) return;
+
+            if (IsDeployed) Retract();
+            else TryDeploy();
         }
 
         public void TryDeploy()

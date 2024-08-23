@@ -52,6 +52,11 @@ namespace PilotPursuit.Movement
             Cursor.lockState = CursorLockMode.Confined;
         }
 
+        private void OnDisable()
+        {
+            if (IsHorizontal) Rotate(false, true);
+        }
+
         private void FixedUpdate()
         {
             if (!IsHorizontal && IsFarFromGround()) Rotate(true);
@@ -76,7 +81,7 @@ namespace PilotPursuit.Movement
 
         private IEnumerator RotateRoutine(bool alwaysComplete = false)
         {
-            var targetRotation = GetTargetRotation(IsHorizontal);
+            var targetRotation = GetTargetRotation();
             while (enabled || alwaysComplete)
             {
                 var rotation = Quaternion.RotateTowards(rigidbody.rotation, targetRotation, rotationSpeed * Time.fixedDeltaTime);
@@ -94,6 +99,8 @@ namespace PilotPursuit.Movement
 
             rotationRoutine = null;
         }
+
+        public Quaternion GetTargetRotation() => GetTargetRotation(IsHorizontal);
 
         private Quaternion GetTargetRotation(bool horizontal)
         {
