@@ -25,8 +25,7 @@ namespace PilotPursuit.Vehicles
 
         public Rigidbody Rigidbody => rigidbody;
         public bool HasVehicle => vehicle != null;
-        public bool IsInVehicle => HasVehicle && isInVehicle;
-        public bool IsPilot => IsInVehicle && this == vehicle.Pilot;
+        public bool IsPilot => isInVehicle && this == vehicle.Pilot;
 
         private void Awake()
         {
@@ -36,27 +35,59 @@ namespace PilotPursuit.Vehicles
 
         private void FixedUpdate()
         {
-            if (IsInVehicle) TryControlVehicle();
+            if (isInVehicle) TryControlVehicle();
             else _ = CheckForVehicle();
         }
 
         #region Boarding
         public void Board(InputAction.CallbackContext context)
         {
-            if (!enabled || !context.performed || !HasVehicle) return;
+            if (!enabled || !context.performed) return;
 
-            isInVehicle = vehicle.TryBoard(this, vehicleHitInfo.point);
+            isInVehicle = TryBoard();
+        }
 
-            if (isInVehicle) OnBoard.Invoke();
+        public bool TryBoard()
+        {
+            if (!enabled || !HasVehicle || isInVehicle || vehicle.IsFull) return false;
+
+            var closestVacantIndex = vehicle.VacantSeats.MinIndex((seat) => Vector3.Distance(vehicleHitInfo.point, seat.position));
+            if (!closestVacantIndex.HasValue)
+            {
+                Debug.LogError($"Tried boarding a full {nameof(Vehicle)}");
+                return false;
+            }
+
+            vehicle[closestVacantIndex.Value] = this;
+
+            OnBoard.Invoke();
+
+            return true;
         }
 
         public void Disembark(InputAction.CallbackContext context)
         {
-            if (!enabled || !context.performed || !IsInVehicle) return;
+            if (!enabled || !context.performed) return;
 
-            isInVehicle = !vehicle.TryDisembark(this);
+            isInVehicle = TryDisembark();
+        }
 
-            if (!isInVehicle) OnDisembark.Invoke();
+        public bool TryDisembark()
+        {
+            if (!enabled || !HasVehicle || !isInVehicle || vehicle.IsEmpty) return false;
+
+            var passengerIndex = vehicle.IndexOf(this);
+            if (!passengerIndex.HasValue)
+            {
+                Debug.LogWarning($"Tried disembarking a {nameof(Vehicle)} that this wasn't on");
+                return false;
+            }
+
+            vehicle[passengerIndex.Value] = null;
+
+            OnDisembark.Invoke();
+
+            return true;
         }
         #endregion
 

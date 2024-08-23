@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 using UnityEngine.InputSystem;
@@ -15,9 +16,9 @@ namespace PilotPursuit.Vehicles
         [SerializeField] private Transform[] passengerPoints;
 
         private PassengerController[] passengers;
-        private string startActionMapName;
 
         public Rigidbody Rigidbody => rigidbody;
+        public IEnumerable<Transform> VacantSeats => passengerPoints.Where((point, index) => passengers[index] == null);
         public PassengerController this[int index]
         {
             get
@@ -25,10 +26,10 @@ namespace PilotPursuit.Vehicles
                 if (index < 0 || index >= passengers.Length) throw new IndexOutOfRangeException($"Index \"{index}\" out of range [0, {passengers.Length - 1}]");
                 return passengers[index];
             }
-            private set
+            set
             {
                 if (index < 0 || index >= passengers.Length) throw new IndexOutOfRangeException($"Index \"{index}\" out of range [0, {passengers.Length - 1}]");
-                if (passengers[index] && value) throw new Exception($"Tried to override passenger {passengers[index].name} with {value.name}");
+                if (passengers[index] && value) throw new Exception($"Tried to override {passengers[index].name} with {value.name}");
                 if (passengers[index] == value) return;
 
                 var isBoarding = value != null;
@@ -38,17 +39,24 @@ namespace PilotPursuit.Vehicles
                 passenger.transform.parent = isBoarding ? passengerPoints[index] : null;
                 passenger.Rigidbody.SetDynamics(!isBoarding);
 
-                if (isBoarding) passenger.transform.SetLocalPositionAndRotation(Vector3.zero, Quaternion.identity);
+                if (isBoarding)
+                {
+                    passenger.transform.SetLocalPositionAndRotation(Vector3.zero, Quaternion.identity);
+                }
                 else
                 {
                     passenger.Rigidbody.velocity = Rigidbody.velocity;
                     passenger.Rigidbody.angularVelocity = Rigidbody.angularVelocity;
                 }
+
+                playerInput.SwitchCurrentActionMap(isBoarding ? actionMapName : playerInput.defaultActionMap);
             }
         }
         public PassengerController Pilot => passengers[0];
         public int PassengerCount => passengers.Where(passenger => passenger != null).Count();
         public int MaxPassengerCount => passengerPoints.Length;
+        public bool IsEmpty => PassengerCount == 0;
+        public bool IsFull => PassengerCount == MaxPassengerCount;
 
         protected virtual void Awake()
         {
@@ -57,56 +65,9 @@ namespace PilotPursuit.Vehicles
             passengers = new PassengerController[passengerPoints.Length];
         }
 
-        #region Boarding
-        public bool TryBoard(PassengerController passenger, Vector3 boardPoint)
-        {
-            if (passenger == null || PassengerCount >= MaxPassengerCount) return false;
+        public int? IndexOf(PassengerController passenger) => passengers.IndexOf(passenger);
 
-            if (passengers.Contains(passenger))
-            {
-                Debug.LogWarning($"Tried boarding a {nameof(PassengerController)} twice");
-                return false;
-            }
-
-            var vacantPoints = passengerPoints.Where((point, index) => passengers[index] == null);
-            var closestVacantIndex = vacantPoints.MinIndex((point) => Vector3.Distance(boardPoint, point.position));
-            if (!closestVacantIndex.HasValue)
-            {
-                Debug.LogError($"No {nameof(passengerPoints)} are vacant");
-                return false;
-            }
-
-            this[closestVacantIndex.Value] = passenger;
-
-            startActionMapName = playerInput.currentActionMap.name;
-            playerInput.SwitchCurrentActionMap(actionMapName);
-
-            return true;
-        }
-
-        public bool TryDisembark(PassengerController passenger)
-        {
-            if (passenger == null || PassengerCount == 0) return false;
-
-            var passengerIndex = passengers.IndexOf(passenger);
-            if (!passengerIndex.HasValue)
-            {
-                Debug.LogWarning($"Tried disembarking a {nameof(PassengerController)} that wasn't on the vehicle");
-                return false;
-            }
-
-            this[passengerIndex.Value] = null;
-
-            playerInput.SwitchCurrentActionMap(startActionMapName);
-            startActionMapName = null;
-
-            return true;
-        }
-        #endregion
-
-        #region Control
         public abstract void Control(Vector3 input);
-        #endregion
 
         #region Debug
         protected virtual void OnValidate()
