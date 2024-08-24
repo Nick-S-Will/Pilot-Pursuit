@@ -54,7 +54,7 @@ namespace PilotPursuit.Movement
 
         private void OnDisable()
         {
-            if (IsHorizontal) Rotate(false, true);
+            if (gameObject.activeSelf && IsHorizontal) Rotate(false, true);
         }
 
         private void FixedUpdate()
