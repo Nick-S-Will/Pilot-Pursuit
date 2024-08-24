@@ -46,12 +46,6 @@ namespace PilotPursuit.Gadgets.UI
             rocketCountText.text = rocketJump.RocketsInClip.ToString();
         }
 
-        [ContextMenu("Show UI")]
-        private void Show() => SetVisible(true);
-
-        [ContextMenu("Hide UI")]
-        private void Hide() => SetVisible(false);
-
         private void SetVisible(bool visible)
         {
             fillImage.enabled = visible;
@@ -71,11 +65,17 @@ namespace PilotPursuit.Gadgets.UI
             if (rocketJump == null) Debug.LogError($"{nameof(rocketJump)} is not assigned on {name}'s {GetType().Name}");
             else if (fillImage == null) Debug.LogError($"{nameof(fillImage)} is not assigned on {name}'s {GetType().Name}");
             else if (rocketCountText == null) Debug.LogError($"{nameof(rocketCountText)} is not assigned on {name}'s {GetType().Name}");
-            else if (otherVisuals.Any(point => point == null)) Debug.LogError($"{nameof(otherVisuals)} contains a null reference on {name}'s {GetType().Name}");
+            else if (otherVisuals.Any(obj => obj == null)) Debug.LogError($"{nameof(otherVisuals)} contains a null reference on {name}'s {GetType().Name}");
             else return true;
 
             return false;
         }
+
+        [ContextMenu("Show UI")]
+        private void Show() => SetVisible(true);
+
+        [ContextMenu("Hide UI")]
+        private void Hide() => SetVisible(false);
         #endregion
     }
 }

@@ -52,12 +52,6 @@ namespace PilotPursuit.Gadgets.UI
             }
         }
 
-        [ContextMenu("Show UI")]
-        private void Show() => SetVisible(true);
-
-        [ContextMenu("Hide UI")]
-        private void Hide() => SetVisible(false);
-
         private void SetVisible(bool visible)
         {
             backgroundImage.enabled = visible;
@@ -77,11 +71,17 @@ namespace PilotPursuit.Gadgets.UI
             if (grapple == null) Debug.LogError($"{nameof(grapple)} is not assigned on {name}'s {GetType().Name}");
             else if (backgroundImage == null) Debug.LogError($"{nameof(backgroundImage)} is not assigned on {name}'s {GetType().Name}");
             else if (fillImage == null) Debug.LogError($"{nameof(fillImage)} is not assigned on {name}'s {GetType().Name}");
-            else if (otherVisuals.Any(point => point == null)) Debug.LogError($"{nameof(otherVisuals)} contains a null reference on {name}'s {GetType().Name}");
+            else if (otherVisuals.Any(obj => obj == null)) Debug.LogError($"{nameof(otherVisuals)} contains a null reference on {name}'s {GetType().Name}");
             else return true;
 
             return false;
         }
+
+        [ContextMenu("Show UI")]
+        private void Show() => SetVisible(true);
+
+        [ContextMenu("Hide UI")]
+        private void Hide() => SetVisible(false);
         #endregion
     }
 }
