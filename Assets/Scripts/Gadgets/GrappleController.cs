@@ -174,8 +174,10 @@ namespace PilotPursuit.Gadgets
         private Quaternion GetCorrectRotation()
         {
             var up = UpDirection;
-            var forward = Vector3.ProjectOnPlane(rigidbody.rotation * Vector3.forward, up);
-            return Quaternion.LookRotation(forward, up);
+            var rigidbodyForward = rigidbody.rotation * Vector3.forward;
+            var correctedForward = Vector3.ProjectOnPlane(rigidbodyForward, up);
+            if (correctedForward == Vector3.zero) correctedForward = rigidbodyForward;
+            return Quaternion.LookRotation(correctedForward, up);
         }
         #endregion
 

@@ -13,6 +13,7 @@ namespace Interactable
 
         private IInteractable interactable;
         private RaycastHit hitInfo;
+        private float lastCheckTime;
 
         public IInteractable Interactable => interactable;
         public Vector3 InteractPoint => HasInteractable ? hitInfo.point : viewPoint.position + maxInteractDistance * viewPoint.forward;
@@ -48,12 +49,13 @@ namespace Interactable
             var hitInteractable = Physics.SphereCast(ray, aimAssistRadius, out hitInfo, maxInteractDistance, interactMask);
 
             interactable = hitInteractable ? hitInfo.collider.GetComponentInParent<IInteractable>() : null;
+            lastCheckTime = Time.time;
         }
 
         #region Debug
         protected virtual void OnDrawGizmosSelected()
         {
-            if (!Application.isPlaying) return;
+            if (!Application.isPlaying || Time.time > lastCheckTime + Time.fixedDeltaTime) return;
 
             Gizmos.DrawLine(viewPoint.position, InteractPoint);
             if (hitInfo.collider != null) Gizmos.DrawWireSphere(InteractPoint, .5f);

@@ -5,8 +5,8 @@ namespace PilotPursuit.Vehicles
 {
     public class Car : Vehicle
     {
-        [SerializeField] private WheelCollider[] accelerationWheels;
         [SerializeField] private WheelCollider[] steeringWheels;
+        [SerializeField] private WheelCollider[] accelerationWheels;
         [Header("Driving Settings")]
         [SerializeField][Min(0f)] private float accelerationTorque = 10000f;
         [SerializeField][Range(0f, 90f)] private float maxSteerAngle = 45f;
