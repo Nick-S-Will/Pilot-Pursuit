@@ -7,7 +7,7 @@ namespace Interactable
         /// </summary>
         Normal,
         /// <summary>
-        /// Meaning trying to activated a state
+        /// Meaning trying to activate a state
         /// </summary>
         On,
         /// <summary>
