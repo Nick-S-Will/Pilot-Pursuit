@@ -9,10 +9,9 @@ namespace PilotPursuit.Vehicles
         [SerializeField] private Transform seatPoint;
         [SerializeField] private bool isPilotSeat;
 
-        public Vehicle Vehicle => vehicle;
+        public Rigidbody VehicleRigidbody => vehicle.Rigidbody;
         public Transform SeatPoint => seatPoint;
         public override string InteractionName => "Sit";
-        public bool IsPilotSeat => isPilotSeat;
 
         public override bool Interact(InteractionType interactionType)
         {
@@ -28,6 +27,13 @@ namespace PilotPursuit.Vehicles
             if (canInteract) base.Interact(IsActuated ? InteractionType.Off : InteractionType.On);
             
             return canInteract;
+        }
+
+        public void ControlVehicle(Vector3 input)
+        {
+            if (!isPilotSeat) return;
+
+            vehicle.Control(input);
         }
 
         #region Debug

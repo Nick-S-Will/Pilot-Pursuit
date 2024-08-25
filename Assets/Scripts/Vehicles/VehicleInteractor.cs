@@ -66,8 +66,8 @@ namespace PilotPursuit.Vehicles
 
             transform.parent = null;
             Rigidbody.EnableDynamics();
-            Rigidbody.velocity = vehicleSeat.Vehicle.Rigidbody.velocity;
-            Rigidbody.angularVelocity = vehicleSeat.Vehicle.Rigidbody.angularVelocity;
+            Rigidbody.velocity = vehicleSeat.VehicleRigidbody.velocity;
+            Rigidbody.angularVelocity = vehicleSeat.VehicleRigidbody.angularVelocity;
             vehicleSeat = null;
 
             OnStand.Invoke();
@@ -90,9 +90,9 @@ namespace PilotPursuit.Vehicles
 
         private void ControlVehicle()
         {
-            if (!IsInVehicle || !vehicleSeat.IsPilotSeat) return;
+            if (!IsInVehicle) return;
 
-            vehicleSeat.Vehicle.Control(vehicleControlInput);
+            vehicleSeat.ControlVehicle(vehicleControlInput);
         }
         #endregion
 
