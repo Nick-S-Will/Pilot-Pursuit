@@ -39,10 +39,9 @@ namespace Interactable
         {
             if (playerInput && playerInput.actions)
             {
-                var actionMapNames = playerInput.actions.actionMaps.Select(map => map.name);
-                if (!actionMapNames.Contains(actionMapName))
+                if (playerInput.actions.FindActionMap(actionMapName) == null)
                 {
-                    Debug.LogError($"{nameof(actionMapName)} \"{actionMapName}\" is not one of {playerInput.actions.name}'s action maps");
+                    Debug.LogError($"Given {nameof(actionMapName)} is not one of {playerInput.actions.name}'s action maps");
                 }
             }
         }
@@ -50,6 +49,7 @@ namespace Interactable
         protected virtual bool CheckReferences()
         {
             if (playerInput == null) Debug.LogError($"{nameof(playerInput)} is not assigned on {name}'s {GetType().Name}");
+            else if (playerInput.actions == null) Debug.LogError($"{nameof(playerInput)}'s {nameof(InputActionAsset)} is not assigned on {name}'s {GetType().Name}");
             else return true;
 
             return false;
